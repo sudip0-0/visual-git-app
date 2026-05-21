@@ -1,0 +1,23 @@
+[package]
+name = "visual-git-app"
+version = "0.1.0"
+description = "A read-only visual Git commit graph desktop app"
+authors = ["Visual Git Commit Graph Desktop contributors"]
+edition = "2021"
+rust-version = "1.77"
+
+[lib]
+name = "visual_git_app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "visual-git-app"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

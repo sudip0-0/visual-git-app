@@ -50,7 +50,7 @@ Acceptance Criteria:
 
 ### TASK-0101: Initialize Tauri project
 
-Status: Todo
+Status: Done
 
 Description:
 Create the base Tauri 2 project with React and TypeScript.
@@ -82,7 +82,7 @@ Checks:
 
 ### TASK-0102: Add formatting and linting
 
-Status: Todo
+Status: Done
 
 Description:
 Configure code quality tools.
@@ -114,7 +114,7 @@ Checks:
 
 ### TASK-0103: Create base app layout
 
-Status: Todo
+Status: Done
 
 Description:
 Create the initial desktop layout.

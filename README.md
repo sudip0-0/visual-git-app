@@ -6,9 +6,9 @@ The app opens a local Git repository, reads commit history, branches, tags, and 
 
 ## Project Status
 
-Current phase: planning and documentation.
+Current phase: project foundation.
 
-The project has not started implementation yet.
+The project has a Tauri 2 + React + TypeScript + Tailwind CSS foundation with a placeholder desktop shell. Git repository loading and graph data are not implemented yet.
 
 ## Recommended Tech Stack
 
@@ -145,13 +145,33 @@ Do not let multiple agents edit the same area at the same time.
 
 ## Local Setup
 
-The exact setup will be finalized after project initialization.
+Prerequisites:
 
-Expected commands:
+- Node.js 22 or newer
+- npm 10 or newer
+- Rust toolchain with `cargo` available on `PATH`
+
+Install dependencies:
 
 ```bash
 npm install
+```
+
+Run the frontend dev server:
+
+```bash
+npm run dev
+```
+
+Run the desktop app:
+
+```bash
 npm run tauri dev
+```
+
+Frontend checks:
+
+```bash
 npm run test
 npm run lint
 npm run typecheck
@@ -160,10 +180,11 @@ npm run typecheck
 Rust checks:
 
 ```bash
+cd src-tauri
+cargo fmt --check
 cargo check
-cargo test
 cargo clippy
-cargo fmt
+cargo test
 ```
 
 ## Build Strategy
