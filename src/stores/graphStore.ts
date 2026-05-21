@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { useCallback, useMemo, useState } from "react";
-import type { CommitGraphResponse } from "../types/graph";
+import type { CommitGraphResponse, GraphCommitNode } from "../types/graph";
 import type { RepositoryError } from "../types/repository";
 
 function toGraphError(error: unknown): RepositoryError {
@@ -26,6 +26,7 @@ function toGraphError(error: unknown): RepositoryError {
 
 export function useGraphStore() {
   const [graph, setGraph] = useState<CommitGraphResponse | null>(null);
+  const [selectedCommitId, setSelectedCommitId] = useState<string | null>(null);
   const [error, setError] = useState<RepositoryError | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -40,11 +41,13 @@ export function useGraphStore() {
       });
 
       setGraph(nextGraph);
+      setSelectedCommitId(nextGraph.commits[0]?.id ?? null);
       return nextGraph;
     } catch (graphError) {
       const nextError = toGraphError(graphError);
 
       setGraph(null);
+      setSelectedCommitId(null);
       setError(nextError);
       throw nextError;
     } finally {
@@ -52,13 +55,43 @@ export function useGraphStore() {
     }
   }, []);
 
+  const selectCommit = useCallback((commitId: string) => {
+    setSelectedCommitId(commitId);
+  }, []);
+
+  const clearGraph = useCallback(() => {
+    setGraph(null);
+    setSelectedCommitId(null);
+    setError(null);
+    setIsLoading(false);
+  }, []);
+
+  const selectedCommit = useMemo<GraphCommitNode | null>(
+    () =>
+      graph?.commits.find((commit) => commit.id === selectedCommitId) ?? null,
+    [graph, selectedCommitId],
+  );
+
   return useMemo(
     () => ({
       graph,
+      selectedCommit,
+      selectedCommitId,
       error,
       isLoading,
+      clearGraph,
       loadCommitGraph,
+      selectCommit,
     }),
-    [error, graph, isLoading, loadCommitGraph],
+    [
+      clearGraph,
+      error,
+      graph,
+      isLoading,
+      loadCommitGraph,
+      selectCommit,
+      selectedCommit,
+      selectedCommitId,
+    ],
   );
 }

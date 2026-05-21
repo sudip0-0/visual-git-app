@@ -1,22 +1,47 @@
+import { useEffect, useRef } from "react";
 import { DetailsPanel } from "./DetailsPanel";
 import { GraphArea } from "./GraphArea";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
+import { useGraphStore } from "../../stores/graphStore";
 import { useRepositoryStore } from "../../stores/repositoryStore";
 
 export function AppShell() {
   const repositoryStore = useRepositoryStore();
+  const graphStore = useGraphStore();
+  const loadedGraphPath = useRef<string | null>(null);
+  const isLoading = repositoryStore.isLoading || graphStore.isLoading;
+  const error = repositoryStore.error ?? graphStore.error;
+
+  useEffect(() => {
+    const path = repositoryStore.repository?.path ?? null;
+
+    if (!path) {
+      loadedGraphPath.current = null;
+      graphStore.clearGraph();
+      return;
+    }
+
+    if (loadedGraphPath.current === path) {
+      return;
+    }
+
+    loadedGraphPath.current = path;
+    void graphStore.loadCommitGraph(path, 500).catch(() => {
+      // The graph store keeps the user-safe error for the viewport.
+    });
+  }, [graphStore, repositoryStore.repository?.path]);
 
   return (
     <div className="flex min-h-screen flex-col bg-[#090b10] text-slate-100">
       <TopBar
-        isLoading={repositoryStore.isLoading}
+        isLoading={isLoading}
         onOpenRepository={repositoryStore.openRepositoryPicker}
         repository={repositoryStore.repository}
       />
       <div className="grid min-h-0 flex-1 grid-cols-[260px_minmax(0,1fr)_320px] border-t border-slate-800">
         <Sidebar
-          isLoading={repositoryStore.isLoading}
+          isLoading={isLoading}
           onOpenRecentRepository={repositoryStore.validateRepositoryPath}
           onRemoveRecentRepository={repositoryStore.removeRecentRepository}
           recentRepositories={repositoryStore.recentRepositories}
@@ -24,13 +49,18 @@ export function AppShell() {
           repositoryData={repositoryStore.repositoryData}
         />
         <GraphArea
-          error={repositoryStore.error}
-          isLoading={repositoryStore.isLoading}
+          error={error}
+          graph={graphStore.graph}
+          isLoading={isLoading}
           onOpenRepository={repositoryStore.openRepositoryPicker}
+          onSelectCommit={graphStore.selectCommit}
           repository={repositoryStore.repository}
-          repositoryData={repositoryStore.repositoryData}
+          selectedCommitId={graphStore.selectedCommitId}
         />
-        <DetailsPanel repository={repositoryStore.repository} />
+        <DetailsPanel
+          repository={repositoryStore.repository}
+          selectedCommit={graphStore.selectedCommit}
+        />
       </div>
     </div>
   );

@@ -2,17 +2,17 @@
 
 ## Current Project Status
 
-Git data engine and graph engine foundation implemented.
+Git data engine, graph engine, and basic graph UI implemented.
 
-The app can open a native folder picker, validate a selected local Git repository in Rust, load read-only repository metadata through a `GitProvider` abstraction, list local and remote branches, list tags, load recent commits with parent hashes and merge detection, and build graph-ready commit data with lanes, edges, refs, and HEAD markers. Rust and frontend checks pass.
+The app can open a native folder picker, validate a selected local Git repository in Rust, load read-only repository metadata through a `GitProvider` abstraction, list local and remote branches, list tags, load recent commits with parent hashes and merge detection, build graph-ready commit data with lanes, edges, refs, and HEAD markers, and render a scrollable SVG commit graph with selectable commits. Rust and frontend checks pass.
 
 ## Current Phase
 
-Phase 4: Graph Engine
+Phase 5: Graph UI
 
 ## Current Focus
 
-Ready for TASK-0501: Render basic commit graph.
+Ready for TASK-0503: Add graph pan and zoom.
 
 ## Completed
 
@@ -36,9 +36,58 @@ None.
 
 ## Next Recommended Task
 
-TASK-0501: Render basic commit graph.
+TASK-0503: Add graph pan and zoom.
 
 ## 2026-05-21
+
+### TASK-0501 to TASK-0502: Basic graph UI and commit selection
+
+Status: Done
+
+Summary:
+
+- Added modular SVG graph components for commit nodes, parent edges, merge edges, and the scrollable graph viewport.
+- Loaded the graph response after a repository opens and stored selected commit state in the graph store.
+- Highlighted the selected commit and defaulted selection to the latest loaded commit.
+- Replaced the placeholder graph area with loading, empty, error, and rendered graph states.
+- Added selected commit details in the right panel, including parent hashes, branches, and tags.
+- Kept graph rendering in React and Git reading in Rust/Tauri.
+
+Files changed:
+
+- `src/components/commit/CommitDetailsPanel.tsx`
+- `src/components/graph/CommitEdge.tsx`
+- `src/components/graph/CommitGraph.tsx`
+- `src/components/graph/CommitNode.tsx`
+- `src/components/graph/GraphViewport.tsx`
+- `src/components/layout/AppShell.tsx`
+- `src/components/layout/DetailsPanel.tsx`
+- `src/components/layout/GraphArea.tsx`
+- `src/stores/graphStore.ts`
+- `PROGRESS.md`
+
+Tests run:
+
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test`
+- `cargo fmt --check`
+- `cargo check`
+- `cargo test`
+- Browser smoke check at `http://127.0.0.1:1420/`
+- Source/config safety scan for Git write operations, shell execution, repository script execution, and network calls
+
+Result:
+
+- Passed.
+
+Issues found:
+
+- Plain Vite browser smoke testing can verify the shell and empty state, but the folder picker and Tauri command invocation require the Tauri desktop runtime.
+
+Next recommended task:
+
+- TASK-0503: Add graph pan and zoom.
 
 ### Phase 4 quality check
 
