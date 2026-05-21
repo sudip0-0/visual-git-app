@@ -245,6 +245,9 @@ mod tests {
         assert_eq!(main_node.lane, 0);
         assert_ne!(feature_node.lane, main_node.lane);
         assert_eq!(base_node.lane, main_node.lane);
+        assert_eq!(main_node.branch_names, vec!["main"]);
+        assert_eq!(feature_node.branch_names, vec!["feature/demo"]);
+        assert!(base_node.branch_names.is_empty());
         assert_eq!(feature_node.x, 24 + (feature_node.lane * 32));
     }
 
@@ -309,6 +312,64 @@ mod tests {
         assert!(node(&graph, &second.id).is_head);
         assert!(!node(&graph, &first.id).is_head);
         assert_eq!(node(&graph, &second.id).branch_names, vec!["main"]);
+    }
+
+    #[test]
+    fn keeps_layout_deterministic() {
+        let base = commit("a", &[]);
+        let main = commit("b", &[&base.id]);
+        let feature = commit("c", &[&base.id]);
+        let merge = commit("d", &[&main.id, &feature.id]);
+        let commits = vec![merge.clone(), main.clone(), feature.clone(), base.clone()];
+        let branches = vec![
+            branch("feature/demo", &feature.id, false),
+            branch("main", &merge.id, true),
+        ];
+
+        let first_graph = build_commit_graph(
+            repository(Some(&merge.id), Some("main")),
+            commits.clone(),
+            branches.clone(),
+            vec![tag("v1.0.0", &base.id)],
+        );
+        let second_graph = build_commit_graph(
+            repository(Some(&merge.id), Some("main")),
+            commits,
+            branches,
+            vec![tag("v1.0.0", &base.id)],
+        );
+
+        let first_nodes = first_graph
+            .commits
+            .iter()
+            .map(|node| {
+                (
+                    node.id.as_str(),
+                    node.x,
+                    node.y,
+                    node.lane,
+                    node.branch_names.clone(),
+                    node.tag_names.clone(),
+                )
+            })
+            .collect::<Vec<_>>();
+        let second_nodes = second_graph
+            .commits
+            .iter()
+            .map(|node| {
+                (
+                    node.id.as_str(),
+                    node.x,
+                    node.y,
+                    node.lane,
+                    node.branch_names.clone(),
+                    node.tag_names.clone(),
+                )
+            })
+            .collect::<Vec<_>>();
+
+        assert_eq!(first_nodes, second_nodes);
+        assert_eq!(first_graph.edges, second_graph.edges);
     }
 
     fn node<'a>(graph: &'a CommitGraphResponse, id: &str) -> &'a GraphCommitNode {

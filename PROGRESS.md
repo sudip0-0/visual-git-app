@@ -12,7 +12,7 @@ Phase 4: Graph Engine
 
 ## Current Focus
 
-Ready for TASK-0403: Add graph loading command.
+Ready for TASK-0501: Render basic commit graph.
 
 ## Completed
 
@@ -28,7 +28,7 @@ Ready for TASK-0403: Add graph loading command.
 
 ## In Progress
 
-TASK-0403: Add graph loading command.
+None.
 
 ## Blocked
 
@@ -36,13 +36,50 @@ None.
 
 ## Next Recommended Task
 
-TASK-0401: Build graph response model.
+TASK-0501: Render basic commit graph.
 
 ## 2026-05-21
 
+### Phase 4 quality check
+
+Status: Done
+
+Summary:
+
+- Verified graph models are serializable and graph command returns typed frontend data.
+- Verified graph builder accepts commits, branches, tags, and repository HEAD data.
+- Verified parent edges, merge edges, branch labels, tag labels, HEAD marking, node coordinates, lanes, and deterministic layout behavior.
+- Added focused graph tests for branch label mapping and deterministic layout.
+- Confirmed no app-flow Git write operations, shell execution, repository script execution, or network calls were added.
+
+Files changed:
+
+- `src-tauri/src/graph/graph_builder.rs`
+- `PROGRESS.md`
+
+Tests run:
+
+- `cargo fmt --check`
+- `cargo check`
+- `cargo test`
+- `npm run typecheck`
+- Source/config safety scan for Git write operations, shell execution, repository script execution, and network calls
+
+Result:
+
+- Passed.
+
+Issues found:
+
+- Existing graph tests covered branch lanes and tag mapping, but branch label mapping and layout determinism were not asserted directly; added coverage.
+
+Next recommended task:
+
+- TASK-0501: Render basic commit graph.
+
 ### TASK-0401 to TASK-0403: Graph Engine
 
-Status: In Progress
+Status: Done
 
 Summary:
 
@@ -87,7 +124,7 @@ Issues found:
 
 Next recommended task:
 
-- TASK-0403: Add graph loading command.
+- TASK-0501: Render basic commit graph.
 
 ### Phase 3 quality check
 
