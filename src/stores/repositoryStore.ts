@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useCallback, useMemo, useState } from "react";
+import type { BranchInfo, CommitInfo, RepositoryData, TagInfo } from "../types/git";
 import type {
   RecentRepository,
   RepositoryError,
@@ -74,6 +75,9 @@ function updateRecentRepositories(
 
 export function useRepositoryStore() {
   const [repository, setRepository] = useState<RepositorySummary | null>(null);
+  const [repositoryData, setRepositoryData] = useState<RepositoryData | null>(
+    null,
+  );
   const [recentRepositories, setRecentRepositories] = useState<
     RecentRepository[]
   >(() => readRecentRepositories());
@@ -89,7 +93,17 @@ export function useRepositoryStore() {
         const summary = await invoke<RepositorySummary>("validate_repository", {
           path,
         });
+        const [branches, tags, commits] = await Promise.all([
+          invoke<BranchInfo[]>("list_branches", { path: summary.path }),
+          invoke<TagInfo[]>("list_tags", { path: summary.path }),
+          invoke<CommitInfo[]>("load_recent_commits", {
+            path: summary.path,
+            limit: 500,
+          }),
+        ]);
+
         setRepository(summary);
+        setRepositoryData({ branches, tags, commits });
 
         const nextRecentRepositories = updateRecentRepositories(
           recentRepositories,
@@ -99,6 +113,7 @@ export function useRepositoryStore() {
         writeRecentRepositories(nextRecentRepositories);
       } catch (validationError) {
         setRepository(null);
+        setRepositoryData(null);
         setError(toRepositoryError(validationError));
       } finally {
         setIsLoading(false);
@@ -140,6 +155,7 @@ export function useRepositoryStore() {
   return useMemo(
     () => ({
       repository,
+      repositoryData,
       recentRepositories,
       error,
       isLoading,
@@ -149,6 +165,7 @@ export function useRepositoryStore() {
     }),
     [
       repository,
+      repositoryData,
       recentRepositories,
       error,
       isLoading,

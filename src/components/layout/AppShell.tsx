@@ -21,12 +21,14 @@ export function AppShell() {
           onRemoveRecentRepository={repositoryStore.removeRecentRepository}
           recentRepositories={repositoryStore.recentRepositories}
           repository={repositoryStore.repository}
+          repositoryData={repositoryStore.repositoryData}
         />
         <GraphArea
           error={repositoryStore.error}
           isLoading={repositoryStore.isLoading}
           onOpenRepository={repositoryStore.openRepositoryPicker}
           repository={repositoryStore.repository}
+          repositoryData={repositoryStore.repositoryData}
         />
         <DetailsPanel repository={repositoryStore.repository} />
       </div>

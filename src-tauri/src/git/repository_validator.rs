@@ -1,87 +1,12 @@
-use std::fs;
-use std::io;
 use std::path::PathBuf;
 
-use git2::Repository;
-
 use crate::errors::AppError;
+use crate::git::git2_provider::Git2Provider;
+use crate::git::provider::GitProvider;
 use crate::models::repository::RepositorySummary;
 
 pub fn validate_repository_path(path: PathBuf) -> Result<RepositorySummary, AppError> {
-    let metadata = fs::metadata(&path).map_err(|error| map_metadata_error(error, &path))?;
-
-    if !metadata.is_dir() {
-        return Err(AppError::invalid_path("Select a folder, not a file."));
-    }
-
-    let repo = Repository::open_ext(
-        &path,
-        git2::RepositoryOpenFlags::NO_SEARCH,
-        Vec::<PathBuf>::new(),
-    )
-    .map_err(|error| map_git_error(error, &path))?;
-
-    Ok(RepositorySummary {
-        path: path.to_string_lossy().into_owned(),
-        name: repository_name(&path),
-        current_branch: current_branch(&repo),
-        head_hash: head_hash(&repo),
-        is_bare: repo.is_bare(),
-        is_empty: repo.is_empty().unwrap_or(false),
-    })
-}
-
-fn repository_name(path: &std::path::Path) -> String {
-    path.file_name()
-        .and_then(|name| name.to_str())
-        .filter(|name| !name.is_empty())
-        .unwrap_or("Repository")
-        .to_owned()
-}
-
-fn current_branch(repo: &Repository) -> Option<String> {
-    repo.head()
-        .ok()
-        .filter(|head| head.is_branch())
-        .and_then(|head| head.shorthand().map(str::to_owned))
-}
-
-fn head_hash(repo: &Repository) -> Option<String> {
-    repo.head().ok().and_then(|head| {
-        head.target().map(|target| target.to_string()).or_else(|| {
-            head.peel_to_commit()
-                .ok()
-                .map(|commit| commit.id().to_string())
-        })
-    })
-}
-
-fn map_metadata_error(error: io::Error, _path: &std::path::Path) -> AppError {
-    match error.kind() {
-        io::ErrorKind::NotFound => AppError::invalid_path("The selected folder does not exist."),
-        io::ErrorKind::PermissionDenied => {
-            AppError::permission_denied("Permission denied while reading the selected folder.")
-        }
-        _ => AppError::read_failure("Could not read the selected folder."),
-    }
-}
-
-fn map_git_error(error: git2::Error, _path: &std::path::Path) -> AppError {
-    match error.code() {
-        git2::ErrorCode::NotFound => {
-            AppError::invalid_repository("This folder is not a Git repository.")
-        }
-        git2::ErrorCode::BareRepo => {
-            AppError::invalid_repository("Bare repositories are not supported yet.")
-        }
-        git2::ErrorCode::UnbornBranch => {
-            AppError::invalid_repository("This repository has no commits yet.")
-        }
-        _ if error.message().to_ascii_lowercase().contains("permission") => {
-            AppError::permission_denied("Permission denied while reading this repository.")
-        }
-        _ => AppError::read_failure("Could not read this Git repository."),
-    }
+    Git2Provider::open(&path.to_string_lossy())?.repository_summary()
 }
 
 #[cfg(test)]
@@ -138,41 +63,14 @@ mod tests {
         );
         assert!(summary.is_empty);
         assert!(summary.head_hash.is_none());
+        assert!(!summary.is_detached);
     }
 
     #[test]
     fn accepts_git_repository_with_head() {
         let test_dir = TestDir::new("repo_with_head");
         let repo = Repository::init(&test_dir.path).expect("test repository should initialize");
-        let file_path = test_dir.path.join("README.md");
-        fs::write(&file_path, "test repository").expect("test file should be written");
-
-        let mut index = repo.index().expect("repository index should open");
-        index
-            .add_path(std::path::Path::new("README.md"))
-            .expect("test file should be added to index");
-        index.write().expect("index should be written");
-        let tree_id = index.write_tree().expect("tree should be written");
-        let tree = repo.find_tree(tree_id).expect("tree should be readable");
-        let signature = git2::Signature::now("Visual Git Test", "visual-git@example.invalid")
-            .expect("test signature should be created");
-        repo.commit(
-            Some("HEAD"),
-            &signature,
-            &signature,
-            "Initial commit",
-            &tree,
-            &[],
-        )
-        .expect("initial test commit should be created");
-        let head_before_validation = repo
-            .head()
-            .expect("HEAD should exist after initial commit")
-            .target()
-            .expect("HEAD should point to a commit");
-
-        drop(tree);
-        drop(repo);
+        let head_before_validation = create_commit(&repo, "Initial commit", &[]);
 
         let summary = validate_repository_path(test_dir.path.clone())
             .expect("committed Git repository should be valid");
@@ -186,6 +84,7 @@ mod tests {
 
         assert!(!summary.is_empty);
         assert!(summary.head_hash.is_some());
+        assert!(!summary.is_detached);
         assert_eq!(head_before_validation, head_after_validation);
     }
 
@@ -222,5 +121,32 @@ mod tests {
 
         assert_eq!(error.code, AppErrorCode::InvalidPath);
         assert_eq!(error.message, "The selected folder does not exist.");
+    }
+
+    fn create_commit(repo: &Repository, message: &str, parents: &[git2::Commit<'_>]) -> git2::Oid {
+        let file_name = format!("{}.txt", message.replace(' ', "_"));
+        fs::write(repo.workdir().unwrap().join(&file_name), message)
+            .expect("test file should be written");
+
+        let mut index = repo.index().expect("repository index should open");
+        index
+            .add_path(std::path::Path::new(&file_name))
+            .expect("test file should be added to index");
+        index.write().expect("index should be written");
+        let tree_id = index.write_tree().expect("tree should be written");
+        let tree = repo.find_tree(tree_id).expect("tree should be readable");
+        let signature = git2::Signature::now("Visual Git Test", "visual-git@example.invalid")
+            .expect("test signature should be created");
+        let parent_refs = parents.iter().collect::<Vec<_>>();
+
+        repo.commit(
+            Some("HEAD"),
+            &signature,
+            &signature,
+            message,
+            &tree,
+            &parent_refs,
+        )
+        .expect("test commit should be created")
     }
 }

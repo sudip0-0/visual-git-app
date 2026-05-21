@@ -1,4 +1,5 @@
 import { OpenRepositoryButton } from "../repository/OpenRepositoryButton";
+import type { RepositoryData } from "../../types/git";
 import type {
   RepositoryError,
   RepositorySummary,
@@ -6,6 +7,7 @@ import type {
 
 type GraphAreaProps = {
   repository: RepositorySummary | null;
+  repositoryData: RepositoryData | null;
   error: RepositoryError | null;
   isLoading: boolean;
   onOpenRepository: () => void;
@@ -13,6 +15,7 @@ type GraphAreaProps = {
 
 export function GraphArea({
   repository,
+  repositoryData,
   error,
   isLoading,
   onOpenRepository,
@@ -32,8 +35,9 @@ export function GraphArea({
                 {repository.path}
               </p>
               <p className="mt-4 text-sm leading-6 text-slate-500">
-                Repository validation is complete. Commit graph loading is the
-                next phase.
+                Loaded {repositoryData?.commits.length ?? 0} recent commits,
+                {repositoryData?.branches.length ?? 0} branches, and{" "}
+                {repositoryData?.tags.length ?? 0} tags.
               </p>
             </>
           ) : (

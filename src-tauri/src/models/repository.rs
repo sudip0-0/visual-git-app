@@ -9,4 +9,5 @@ pub struct RepositorySummary {
     pub head_hash: Option<String>,
     pub is_bare: bool,
     pub is_empty: bool,
+    pub is_detached: bool,
 }

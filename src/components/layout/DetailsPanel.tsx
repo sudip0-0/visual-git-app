@@ -8,7 +8,12 @@ export function DetailsPanel({ repository }: DetailsPanelProps) {
   const detailRows = repository
     ? [
         ["Repository", repository.name],
-        ["Branch", repository.currentBranch ?? "Detached or unavailable"],
+        [
+          "Branch",
+          repository.isDetached
+            ? "Detached HEAD"
+            : repository.currentBranch ?? "Unavailable",
+        ],
         ["HEAD", repository.headHash ? repository.headHash.slice(0, 12) : "Unavailable"],
         ["Empty", repository.isEmpty ? "Yes" : "No"],
       ]

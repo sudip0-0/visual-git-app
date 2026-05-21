@@ -5,6 +5,7 @@ export type RepositorySummary = {
   headHash?: string;
   isBare: boolean;
   isEmpty: boolean;
+  isDetached: boolean;
 };
 
 export type RecentRepository = {

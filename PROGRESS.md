@@ -2,9 +2,9 @@
 
 ## Current Project Status
 
-Repository opening implemented.
+Git data engine implemented.
 
-The app can open a native folder picker, validate a selected local Git repository in Rust, show basic repository information, display safe validation errors, and remember recent repositories locally. Rust and frontend checks pass.
+The app can open a native folder picker, validate a selected local Git repository in Rust, load read-only repository metadata through a `GitProvider` abstraction, list local and remote branches, list tags, and load recent commits with parent hashes and merge detection. Rust and frontend checks pass.
 
 ## Current Phase
 
@@ -12,7 +12,7 @@ Phase 3: Git Data Engine
 
 ## Current Focus
 
-Ready for TASK-0301: Add Git provider abstraction.
+Ready for TASK-0401: Build graph response model.
 
 ## Completed
 
@@ -36,7 +36,110 @@ None.
 
 ## Next Recommended Task
 
-TASK-0301: Add Git provider abstraction.
+TASK-0401: Build graph response model.
+
+## 2026-05-21
+
+### Phase 3 quality check
+
+Status: Done
+
+Summary:
+
+- Verified the `GitProvider` abstraction and `Git2Provider` implementation exist.
+- Verified Tauri commands remain thin and delegate through the service layer.
+- Verified repository summary, current branch, detached HEAD, empty repository handling, branch listing, tag listing, recent commit loading, parent hashes, and merge detection are covered by Rust tests.
+- Verified errors are mapped to typed, safe app messages.
+- Confirmed no app-flow Git write operations, shell execution, repository script execution, or unsafe HTML rendering were added.
+
+Files changed:
+
+- `PROGRESS.md`
+
+Tests run:
+
+- `cargo fmt --check`
+- `cargo check`
+- `cargo clippy -- -D warnings`
+- `cargo test`
+- `npm run typecheck`
+- Source/config safety scan for Git write operations, shell execution, repository script execution, and unsafe HTML rendering
+
+Result:
+
+- Passed.
+
+Issues found:
+
+- None.
+
+Next recommended task:
+
+- TASK-0401: Build graph response model.
+
+## 2026-05-21
+
+### TASK-0301 to TASK-0304: Git data engine
+
+Status: Done
+
+Summary:
+
+- Added a read-only `GitProvider` abstraction and `Git2Provider` implementation.
+- Added typed Rust models for repository summaries, branches, tags, and commits.
+- Added thin Tauri commands for branch listing, tag listing, and recent commit loading.
+- Added repository summary support for detached HEAD status.
+- Loaded serialized Git data in the frontend store after repository validation.
+- Displayed basic branch, tag, and commit metadata without adding graph rendering or Git mutation behavior.
+- Added Rust tests for empty repositories, detached HEAD, local and remote branches, lightweight and annotated tags, linear commits, and merge commits.
+
+Files changed:
+
+- `src-tauri/src/app/repository_service.rs`
+- `src-tauri/src/commands/repository_commands.rs`
+- `src-tauri/src/git/git2_provider.rs`
+- `src-tauri/src/git/mod.rs`
+- `src-tauri/src/git/provider.rs`
+- `src-tauri/src/git/repository_validator.rs`
+- `src-tauri/src/lib.rs`
+- `src-tauri/src/models/branch.rs`
+- `src-tauri/src/models/commit.rs`
+- `src-tauri/src/models/mod.rs`
+- `src-tauri/src/models/repository.rs`
+- `src-tauri/src/models/tag.rs`
+- `src/components/layout/AppShell.tsx`
+- `src/components/layout/DetailsPanel.tsx`
+- `src/components/layout/GraphArea.tsx`
+- `src/components/layout/Sidebar.tsx`
+- `src/stores/repositoryStore.ts`
+- `src/types/git.ts`
+- `src/types/repository.ts`
+- `TASKS.md`
+- `PROGRESS.md`
+
+Tests run:
+
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test`
+- `npx vite build`
+- `cargo fmt --check`
+- `cargo check`
+- `cargo clippy -- -D warnings`
+- `cargo test`
+- Source/config safety scan for Git write operations, shell execution, repository script execution, and unsafe HTML rendering
+
+Result:
+
+- Passed.
+
+Issues found:
+
+- The first merge-commit test setup did not make the current tip match the first parent; corrected the test setup and reran the Rust test suite.
+
+Next recommended task:
+
+- TASK-0401: Build graph response model.
 
 ## Last Agent Run Summary
 

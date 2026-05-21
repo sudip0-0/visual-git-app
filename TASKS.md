@@ -267,7 +267,7 @@ Checks:
 
 ### TASK-0301: Add Git provider abstraction
 
-Status: Todo
+Status: Done
 
 Description:
 Create Rust Git provider trait and `git2` implementation shell.
@@ -294,7 +294,7 @@ Checks:
 
 ### TASK-0302: List branches
 
-Status: Todo
+Status: Done
 
 Description:
 Read local and remote branches.
@@ -323,7 +323,7 @@ Checks:
 
 ### TASK-0303: List tags
 
-Status: Todo
+Status: Done
 
 Description:
 Read repository tags.
@@ -351,7 +351,7 @@ Checks:
 
 ### TASK-0304: Load recent commits
 
-Status: Todo
+Status: Done
 
 Description:
 Load recent commits from repository.
