@@ -1,11 +1,24 @@
-const detailRows = [
-  ["Commit", "No commit selected"],
-  ["Author", "Unavailable"],
-  ["Parents", "Unavailable"],
-  ["Refs", "Unavailable"],
-];
+import type { RepositorySummary } from "../../types/repository";
 
-export function DetailsPanel() {
+type DetailsPanelProps = {
+  repository: RepositorySummary | null;
+};
+
+export function DetailsPanel({ repository }: DetailsPanelProps) {
+  const detailRows = repository
+    ? [
+        ["Repository", repository.name],
+        ["Branch", repository.currentBranch ?? "Detached or unavailable"],
+        ["HEAD", repository.headHash ? repository.headHash.slice(0, 12) : "Unavailable"],
+        ["Empty", repository.isEmpty ? "Yes" : "No"],
+      ]
+    : [
+        ["Commit", "No commit selected"],
+        ["Author", "Unavailable"],
+        ["Parents", "Unavailable"],
+        ["Refs", "Unavailable"],
+      ];
+
   return (
     <aside className="border-l border-slate-800 bg-slate-950 p-4">
       <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">

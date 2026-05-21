@@ -147,7 +147,7 @@ Checks:
 
 ### TASK-0201: Add folder picker
 
-Status: Todo
+Status: Done
 
 Description:
 Allow user to select a local folder from the desktop app.
@@ -176,7 +176,7 @@ Checks:
 
 ### TASK-0202: Validate Git repository
 
-Status: Todo
+Status: Done
 
 Description:
 Add Rust command to validate whether a selected folder is a Git repository.
@@ -205,7 +205,7 @@ Checks:
 
 ### TASK-0203: Load repository summary
 
-Status: Todo
+Status: Done
 
 Description:
 Read basic repo information.
@@ -237,7 +237,7 @@ Checks:
 
 ### TASK-0204: Recent repositories
 
-Status: Todo
+Status: Done
 
 Description:
 Remember recently opened repositories.

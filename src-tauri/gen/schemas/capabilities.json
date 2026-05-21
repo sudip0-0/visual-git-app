@@ -1,1 +1,1 @@
-{"default":{"identifier":"default","description":"Default desktop capability with no app commands yet.","local":true,"windows":["main"],"permissions":[]}}
+{"default":{"identifier":"default","description":"Default desktop capability for opening and validating local Git repository folders.","local":true,"windows":["main"],"permissions":["dialog:allow-open"]}}

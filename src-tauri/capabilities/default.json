@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Default desktop capability with no app commands yet.",
+  "description": "Default desktop capability for opening and validating local Git repository folders.",
   "windows": ["main"],
-  "permissions": []
+  "permissions": ["dialog:allow-open"]
 }

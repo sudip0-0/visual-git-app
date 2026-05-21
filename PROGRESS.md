@@ -2,17 +2,17 @@
 
 ## Current Project Status
 
-Project foundation scaffold completed.
+Repository opening implemented.
 
-The app has a Tauri 2 + React + TypeScript + Tailwind CSS foundation and renders a dark placeholder desktop shell. Rust and frontend checks pass.
+The app can open a native folder picker, validate a selected local Git repository in Rust, show basic repository information, display safe validation errors, and remember recent repositories locally. Rust and frontend checks pass.
 
 ## Current Phase
 
-Phase 2: Repository Opening
+Phase 3: Git Data Engine
 
 ## Current Focus
 
-Ready for TASK-0201: Add folder picker.
+Ready for TASK-0301: Add Git provider abstraction.
 
 ## Completed
 
@@ -36,7 +36,7 @@ None.
 
 ## Next Recommended Task
 
-TASK-0201: Add folder picker.
+TASK-0301: Add Git provider abstraction.
 
 ## Last Agent Run Summary
 
@@ -68,6 +68,80 @@ Result:
 - Documentation pack completed.
 
 ## 2026-05-21
+
+### TASK-0201 to TASK-0204: Repository opening
+
+Status: Done
+
+Summary:
+
+- Added a Tauri native folder picker through the official dialog plugin.
+- Added a thin `validate_repository` Tauri command.
+- Added Rust repository validation through the app service and Git validation layer.
+- Added safe handling for valid Git repositories, invalid folders, empty paths, file paths, empty repositories, and permission-style read failures where detectable.
+- Added frontend repository state, selected repository display, safe error messaging, and recent repository storage in local storage.
+- Kept the implementation read-only: no Git CLI, no repository script execution, and no Git write operations.
+
+Files changed:
+
+- `package.json`
+- `package-lock.json`
+- `src-tauri/Cargo.toml`
+- `src-tauri/Cargo.lock`
+- `src-tauri/capabilities/default.json`
+- `src-tauri/gen/schemas/acl-manifests.json`
+- `src-tauri/gen/schemas/capabilities.json`
+- `src-tauri/gen/schemas/desktop-schema.json`
+- `src-tauri/gen/schemas/windows-schema.json`
+- `src-tauri/src/lib.rs`
+- `src-tauri/src/app/mod.rs`
+- `src-tauri/src/app/repository_service.rs`
+- `src-tauri/src/commands/mod.rs`
+- `src-tauri/src/commands/repository_commands.rs`
+- `src-tauri/src/errors.rs`
+- `src-tauri/src/git/mod.rs`
+- `src-tauri/src/git/repository_validator.rs`
+- `src-tauri/src/models/mod.rs`
+- `src-tauri/src/models/repository.rs`
+- `src/components/layout/AppShell.tsx`
+- `src/components/layout/DetailsPanel.tsx`
+- `src/components/layout/GraphArea.tsx`
+- `src/components/layout/Sidebar.tsx`
+- `src/components/layout/TopBar.tsx`
+- `src/components/repository/OpenRepositoryButton.tsx`
+- `src/components/repository/RecentRepositories.tsx`
+- `src/components/repository/RepositoryStatus.tsx`
+- `src/stores/repositoryStore.ts`
+- `src/types/repository.ts`
+- `TASKS.md`
+- `PROGRESS.md`
+
+Tests run:
+
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test`
+- `npx vite build`
+- `cargo fmt --check`
+- `cargo check`
+- `cargo clippy -- -D warnings`
+- `cargo test`
+- `npm run tauri dev`
+- Browser smoke check at `http://localhost:1420/`
+- Source/config safety scan for Git write operations, shell execution, and unsafe HTML rendering
+
+Result:
+
+- Passed.
+
+Issues found:
+
+- `cargo fmt --check` found a Rust formatting change; fixed with `cargo fmt`.
+- A Rust test initially moved a temporary path out of a cleanup wrapper; fixed by cloning the test path.
+
+Next recommended task:
+
+- TASK-0301: Add Git provider abstraction.
 
 ### Phase 1 quality check
 
