@@ -1,7 +1,9 @@
+import { useRef, useState } from "react";
 import type { CommitGraphResponse } from "../../types/graph";
 import type { RepositoryError, RepositorySummary } from "../../types/repository";
 import { OpenRepositoryButton } from "../repository/OpenRepositoryButton";
 import { CommitGraph } from "./CommitGraph";
+import { GraphToolbar } from "./GraphToolbar";
 
 type GraphViewportProps = {
   graph: CommitGraphResponse | null;
@@ -9,8 +11,14 @@ type GraphViewportProps = {
   error: RepositoryError | null;
   isLoading: boolean;
   selectedCommitId: string | null;
+  pan: { x: number; y: number };
+  zoom: number;
   onOpenRepository: () => void;
+  onPan: (deltaX: number, deltaY: number) => void;
+  onResetView: () => void;
   onSelectCommit: (commitId: string) => void;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
 };
 
 export function GraphViewport({
@@ -19,9 +27,18 @@ export function GraphViewport({
   error,
   isLoading,
   selectedCommitId,
+  pan,
+  zoom,
   onOpenRepository,
+  onPan,
+  onResetView,
   onSelectCommit,
+  onZoomIn,
+  onZoomOut,
 }: GraphViewportProps) {
+  const [isPanning, setIsPanning] = useState(false);
+  const lastPointer = useRef<{ x: number; y: number } | null>(null);
+
   if (isLoading) {
     return (
       <GraphShell>
@@ -82,7 +99,7 @@ export function GraphViewport({
   }
 
   return (
-    <div className="relative h-full min-h-[calc(100vh-3.5rem)] overflow-auto bg-[#0c1018]">
+    <div className="relative h-full min-h-[calc(100vh-3.5rem)] overflow-hidden bg-[#0c1018]">
       <div className="sticky top-0 z-10 border-b border-slate-800 bg-slate-950/90 px-5 py-3 backdrop-blur">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
@@ -98,12 +115,63 @@ export function GraphViewport({
           </div>
         </div>
       </div>
-      <div className="min-h-full min-w-full p-6">
-        <CommitGraph
-          graph={graph}
-          onSelectCommit={onSelectCommit}
-          selectedCommitId={selectedCommitId}
+      <div className="absolute right-4 top-20 z-20">
+        <GraphToolbar
+          onReset={onResetView}
+          onZoomIn={onZoomIn}
+          onZoomOut={onZoomOut}
+          zoom={zoom}
         />
+      </div>
+      <div
+        className={isPanning ? "h-full cursor-grabbing" : "h-full cursor-grab"}
+        onPointerCancel={() => {
+          lastPointer.current = null;
+          setIsPanning(false);
+        }}
+        onPointerDown={(event) => {
+          if (event.button !== 0) {
+            return;
+          }
+
+          event.currentTarget.setPointerCapture(event.pointerId);
+          lastPointer.current = { x: event.clientX, y: event.clientY };
+          setIsPanning(true);
+        }}
+        onPointerMove={(event) => {
+          if (!lastPointer.current) {
+            return;
+          }
+
+          const nextPointer = { x: event.clientX, y: event.clientY };
+          onPan(
+            nextPointer.x - lastPointer.current.x,
+            nextPointer.y - lastPointer.current.y,
+          );
+          lastPointer.current = nextPointer;
+        }}
+        onPointerUp={(event) => {
+          if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+            event.currentTarget.releasePointerCapture(event.pointerId);
+          }
+
+          lastPointer.current = null;
+          setIsPanning(false);
+        }}
+      >
+        <div
+          className="min-h-full min-w-full p-6"
+          style={{
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            transformOrigin: "0 0",
+          }}
+        >
+          <CommitGraph
+            graph={graph}
+            onSelectCommit={onSelectCommit}
+            selectedCommitId={selectedCommitId}
+          />
+        </div>
       </div>
     </div>
   );

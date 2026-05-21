@@ -383,7 +383,7 @@ Checks:
 
 ### TASK-0401: Build graph response model
 
-Status: Todo
+Status: Done
 
 Description:
 Combine commits, refs, branches, and tags into a graph response.
@@ -410,7 +410,7 @@ Checks:
 
 ### TASK-0402: Implement simple lane assignment
 
-Status: Todo
+Status: Done
 
 Description:
 Assign graph lanes for visual rendering.
@@ -438,7 +438,7 @@ Checks:
 
 ### TASK-0403: Add graph loading command
 
-Status: Todo
+Status: Done
 
 Description:
 Expose graph loading through Tauri.

@@ -2,9 +2,9 @@
 
 ## Current Project Status
 
-Git data engine, graph engine, and basic graph UI implemented.
+Git data engine, graph engine, and basic graph UI with pan and zoom implemented.
 
-The app can open a native folder picker, validate a selected local Git repository in Rust, load read-only repository metadata through a `GitProvider` abstraction, list local and remote branches, list tags, load recent commits with parent hashes and merge detection, build graph-ready commit data with lanes, edges, refs, and HEAD markers, and render a scrollable SVG commit graph with selectable commits. Rust and frontend checks pass.
+The app can open a native folder picker, validate a selected local Git repository in Rust, load read-only repository metadata through a `GitProvider` abstraction, list local and remote branches, list tags, load recent commits with parent hashes and merge detection, build graph-ready commit data with lanes, edges, refs, and HEAD markers, and render a scrollable SVG commit graph with selectable commits plus pan and zoom controls. Rust and frontend checks pass.
 
 ## Current Phase
 
@@ -12,7 +12,7 @@ Phase 5: Graph UI
 
 ## Current Focus
 
-Ready for TASK-0503: Add graph pan and zoom.
+Ready for TASK-0601: Search commits.
 
 ## Completed
 
@@ -36,9 +36,51 @@ None.
 
 ## Next Recommended Task
 
-TASK-0503: Add graph pan and zoom.
+None.
 
 ## 2026-05-21
+
+### TASK-0503: Add graph pan and zoom
+
+Status: Done
+
+Summary:
+
+- Added a lightweight UI store for graph zoom and pan state.
+- Added SVG graph toolbar controls for zoom in, zoom out, and reset.
+- Enabled drag-to-pan behavior on the graph viewport.
+- Kept the graph scrollable while preserving the existing SVG commit rendering.
+- Verified the controls remain usable above the graph surface.
+
+Files changed:
+
+- `src/components/graph/GraphToolbar.tsx`
+- `src/components/graph/GraphViewport.tsx`
+- `src/components/layout/AppShell.tsx`
+- `src/components/layout/GraphArea.tsx`
+- `src/stores/uiStore.ts`
+- `PROGRESS.md`
+
+Tests run:
+
+- `npm run typecheck`
+- `npm run lint`
+- `cargo fmt --check`
+- `cargo check`
+- `cargo test`
+- Browser smoke check at `http://127.0.0.1:1420/`
+
+Result:
+
+- Passed.
+
+Issues found:
+
+- Browser smoke check confirmed the shell and toolbar presence, but not a fully loaded repository pan/zoom interaction because that path depends on a selected local repository in the Tauri runtime.
+
+Next recommended task:
+
+- TASK-0601: Search commits.
 
 ### TASK-0501 to TASK-0502: Basic graph UI and commit selection
 
@@ -87,7 +129,7 @@ Issues found:
 
 Next recommended task:
 
-- TASK-0503: Add graph pan and zoom.
+- TASK-0601: Search commits.
 
 ### Phase 4 quality check
 

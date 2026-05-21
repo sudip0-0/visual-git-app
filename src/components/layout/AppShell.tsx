@@ -5,10 +5,12 @@ import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { useGraphStore } from "../../stores/graphStore";
 import { useRepositoryStore } from "../../stores/repositoryStore";
+import { useUiStore } from "../../stores/uiStore";
 
 export function AppShell() {
   const repositoryStore = useRepositoryStore();
   const graphStore = useGraphStore();
+  const uiStore = useUiStore();
   const loadedGraphPath = useRef<string | null>(null);
   const isLoading = repositoryStore.isLoading || graphStore.isLoading;
   const error = repositoryStore.error ?? graphStore.error;
@@ -53,9 +55,15 @@ export function AppShell() {
           graph={graphStore.graph}
           isLoading={isLoading}
           onOpenRepository={repositoryStore.openRepositoryPicker}
+          onPan={uiStore.panGraph}
+          onResetView={uiStore.resetGraphView}
           onSelectCommit={graphStore.selectCommit}
+          onZoomIn={uiStore.zoomIn}
+          onZoomOut={uiStore.zoomOut}
+          pan={uiStore.graphPan}
           repository={repositoryStore.repository}
           selectedCommitId={graphStore.selectedCommitId}
+          zoom={uiStore.graphZoom}
         />
         <DetailsPanel
           repository={repositoryStore.repository}

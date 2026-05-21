@@ -11,8 +11,14 @@ type GraphAreaProps = {
   error: RepositoryError | null;
   isLoading: boolean;
   selectedCommitId: string | null;
+  pan: { x: number; y: number };
+  zoom: number;
   onOpenRepository: () => void;
+  onPan: (deltaX: number, deltaY: number) => void;
+  onResetView: () => void;
   onSelectCommit: (commitId: string) => void;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
 };
 
 export function GraphArea({
@@ -21,8 +27,14 @@ export function GraphArea({
   error,
   isLoading,
   selectedCommitId,
+  pan,
+  zoom,
   onOpenRepository,
+  onPan,
+  onResetView,
   onSelectCommit,
+  onZoomIn,
+  onZoomOut,
 }: GraphAreaProps) {
   return (
     <GraphViewport
@@ -30,9 +42,15 @@ export function GraphArea({
       graph={graph}
       isLoading={isLoading}
       onOpenRepository={onOpenRepository}
+      onPan={onPan}
+      onResetView={onResetView}
       onSelectCommit={onSelectCommit}
+      onZoomIn={onZoomIn}
+      onZoomOut={onZoomOut}
+      pan={pan}
       repository={repository}
       selectedCommitId={selectedCommitId}
+      zoom={zoom}
     />
   );
 }
