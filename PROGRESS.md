@@ -69,6 +69,51 @@ Result:
 
 ## 2026-05-21
 
+### Phase 1 quality check
+
+Status: Done
+
+Summary:
+
+- Rechecked Phase 1 scope and source files.
+- Verified Tauri dev launch starts successfully.
+- Verified React renders the top bar, sidebar, graph area, details panel, and empty repository state.
+- Verified TypeScript, linting, Rust formatting, Rust compilation, Clippy, and tests.
+- Confirmed no Git parsing, Git write operations, Tauri filesystem/dialog/shell plugins, process spawning, or unsafe HTML rendering were added.
+- Pointed the Tauri bundle icon config at the existing icon asset.
+
+Files changed:
+
+- `src-tauri/tauri.conf.json`
+- `PROGRESS.md`
+
+Tests run:
+
+- `npm install`
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test`
+- `npx vite build`
+- `cargo fmt --check`
+- `cargo check`
+- `cargo clippy -- -D warnings`
+- `cargo test`
+- `npm run tauri dev`
+- Browser smoke check at `http://localhost:1420/`
+- Source/config safety scan for premature Git parsing and write-capable APIs
+
+Result:
+
+- Passed.
+
+Issues found:
+
+- Tauri bundle config did not reference the icon asset even though the required icon existed.
+
+Next recommended task:
+
+- TASK-0201: Add folder picker.
+
 ### TASK-0101 to TASK-0103: Project foundation
 
 Status: Done
@@ -121,7 +166,6 @@ Tests run:
 - `npm run test`
 - `npx vite build`
 - Browser smoke check at `http://127.0.0.1:1420/`
-- `npm run tauri dev`
 - `cargo check`
 - `cargo fmt --check`
 - `cargo clippy`
