@@ -92,6 +92,8 @@ mod tests {
 
     use git2::Repository;
 
+    use crate::errors::AppErrorCode;
+
     use super::validate_repository_path;
 
     struct TestDir {
@@ -139,12 +141,62 @@ mod tests {
     }
 
     #[test]
+    fn accepts_git_repository_with_head() {
+        let test_dir = TestDir::new("repo_with_head");
+        let repo = Repository::init(&test_dir.path).expect("test repository should initialize");
+        let file_path = test_dir.path.join("README.md");
+        fs::write(&file_path, "test repository").expect("test file should be written");
+
+        let mut index = repo.index().expect("repository index should open");
+        index
+            .add_path(std::path::Path::new("README.md"))
+            .expect("test file should be added to index");
+        index.write().expect("index should be written");
+        let tree_id = index.write_tree().expect("tree should be written");
+        let tree = repo.find_tree(tree_id).expect("tree should be readable");
+        let signature = git2::Signature::now("Visual Git Test", "visual-git@example.invalid")
+            .expect("test signature should be created");
+        repo.commit(
+            Some("HEAD"),
+            &signature,
+            &signature,
+            "Initial commit",
+            &tree,
+            &[],
+        )
+        .expect("initial test commit should be created");
+        let head_before_validation = repo
+            .head()
+            .expect("HEAD should exist after initial commit")
+            .target()
+            .expect("HEAD should point to a commit");
+
+        drop(tree);
+        drop(repo);
+
+        let summary = validate_repository_path(test_dir.path.clone())
+            .expect("committed Git repository should be valid");
+        let repo_after_validation =
+            Repository::open(&test_dir.path).expect("test repository should still open");
+        let head_after_validation = repo_after_validation
+            .head()
+            .expect("HEAD should exist after validation")
+            .target()
+            .expect("HEAD should still point to a commit");
+
+        assert!(!summary.is_empty);
+        assert!(summary.head_hash.is_some());
+        assert_eq!(head_before_validation, head_after_validation);
+    }
+
+    #[test]
     fn rejects_non_git_directory() {
         let test_dir = TestDir::new("invalid_repo");
 
         let error = validate_repository_path(test_dir.path.clone())
             .expect_err("plain directory should not validate as a Git repository");
 
+        assert_eq!(error.code, AppErrorCode::InvalidRepository);
         assert_eq!(error.message, "This folder is not a Git repository.");
     }
 
@@ -156,6 +208,19 @@ mod tests {
 
         let error = validate_repository_path(file_path).expect_err("file path should not validate");
 
+        assert_eq!(error.code, AppErrorCode::InvalidPath);
         assert_eq!(error.message, "Select a folder, not a file.");
+    }
+
+    #[test]
+    fn rejects_missing_path() {
+        let test_dir = TestDir::new("missing_path_parent");
+        let missing_path = test_dir.path.join("missing");
+
+        let error =
+            validate_repository_path(missing_path).expect_err("missing path should not validate");
+
+        assert_eq!(error.code, AppErrorCode::InvalidPath);
+        assert_eq!(error.message, "The selected folder does not exist.");
     }
 }

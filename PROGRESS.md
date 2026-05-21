@@ -69,6 +69,52 @@ Result:
 
 ## 2026-05-21
 
+### Phase 2 quality check
+
+Status: Done
+
+Summary:
+
+- Reviewed repository opening flow across frontend state, Tauri command, Rust service, and Git validation layer.
+- Confirmed command handlers remain thin and validation stays in Rust service/Git code.
+- Confirmed selected repository data and error states are rendered as React text.
+- Confirmed native folder picker cancel returns without changing app state or crashing.
+- Confirmed no app-flow Git write operations, repository file execution, arbitrary shell commands, or unsafe HTML rendering were added.
+- Added Rust coverage for a normal Git repository with `HEAD`, missing paths, typed error codes, and validation not changing `HEAD`.
+
+Files changed:
+
+- `src-tauri/src/app/repository_service.rs`
+- `src-tauri/src/errors.rs`
+- `src-tauri/src/git/repository_validator.rs`
+- `PROGRESS.md`
+
+Tests run:
+
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test`
+- `cargo fmt --check`
+- `cargo check`
+- `cargo clippy -- -D warnings`
+- `cargo test`
+- `npm run tauri dev`
+- Manual code inspection of Tauri input validation, frontend error states, and Rust path handling
+- Source/config safety scan for Git write operations, shell execution, repository script execution, and unsafe HTML rendering
+
+Result:
+
+- Passed.
+
+Issues found:
+
+- Existing tests covered empty repositories and invalid folders, but not a normal repository with `HEAD`; added coverage.
+- Existing tests asserted messages but not typed error codes; added coverage.
+
+Next recommended task:
+
+- TASK-0301: Add Git provider abstraction.
+
 ### TASK-0201 to TASK-0204: Repository opening
 
 Status: Done

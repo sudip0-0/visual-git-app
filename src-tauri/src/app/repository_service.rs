@@ -22,6 +22,7 @@ mod tests {
     fn rejects_empty_path() {
         let error = validate_repository("   ".to_owned()).expect_err("empty path should fail");
 
+        assert_eq!(error.code, crate::errors::AppErrorCode::InvalidPath);
         assert_eq!(error.message, "Select a repository folder first.");
     }
 }
