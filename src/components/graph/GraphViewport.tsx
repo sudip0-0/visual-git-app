@@ -99,7 +99,7 @@ export function GraphViewport({
   }
 
   return (
-    <div className="relative h-full min-h-[calc(100vh-3.5rem)] overflow-hidden bg-[#0c1018]">
+    <div className="relative h-full min-h-[calc(100vh-3.5rem)] overflow-auto bg-[#0c1018]">
       <div className="sticky top-0 z-10 border-b border-slate-800 bg-slate-950/90 px-5 py-3 backdrop-blur">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">

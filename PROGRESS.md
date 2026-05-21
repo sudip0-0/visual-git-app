@@ -40,6 +40,47 @@ None.
 
 ## 2026-05-21
 
+### Phase 5 quality check
+
+Status: Done
+
+Summary:
+
+- Verified graph loading is triggered after repository validation succeeds.
+- Verified loading, empty, and error states exist in the graph viewport.
+- Verified commit nodes, parent edges, merge edges, selected commit highlighting, branch/tag refs, and details panel updates are implemented from the typed graph response.
+- Verified TypeScript graph types match the Rust graph response shape.
+- Restored native graph viewport scrollability while preserving drag pan and zoom controls.
+- Confirmed no app-flow Git write operations, shell execution, repository script execution, or network calls were added.
+
+Files changed:
+
+- `src/components/graph/GraphViewport.tsx`
+- `PROGRESS.md`
+
+Tests run:
+
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test`
+- `cargo check`
+- `cargo test`
+- Browser smoke check at `http://127.0.0.1:1420/`
+- Source/config safety scan for Git write operations, shell execution, repository script execution, and network calls
+
+Result:
+
+- Passed.
+
+Issues found:
+
+- Graph viewport used drag pan but had `overflow-hidden`, so native scrollability was missing; changed it to `overflow-auto`.
+- `npm run test` passed with no frontend test files found.
+
+Next recommended task:
+
+- TASK-0601: Search commits.
+
 ### TASK-0503: Add graph pan and zoom
 
 Status: Done
