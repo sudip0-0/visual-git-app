@@ -2,17 +2,17 @@
 
 ## Current Project Status
 
-Git data engine implemented.
+Git data engine and graph engine foundation implemented.
 
-The app can open a native folder picker, validate a selected local Git repository in Rust, load read-only repository metadata through a `GitProvider` abstraction, list local and remote branches, list tags, and load recent commits with parent hashes and merge detection. Rust and frontend checks pass.
+The app can open a native folder picker, validate a selected local Git repository in Rust, load read-only repository metadata through a `GitProvider` abstraction, list local and remote branches, list tags, load recent commits with parent hashes and merge detection, and build graph-ready commit data with lanes, edges, refs, and HEAD markers. Rust and frontend checks pass.
 
 ## Current Phase
 
-Phase 3: Git Data Engine
+Phase 4: Graph Engine
 
 ## Current Focus
 
-Ready for TASK-0401: Build graph response model.
+Ready for TASK-0403: Add graph loading command.
 
 ## Completed
 
@@ -28,7 +28,7 @@ Ready for TASK-0401: Build graph response model.
 
 ## In Progress
 
-None.
+TASK-0403: Add graph loading command.
 
 ## Blocked
 
@@ -39,6 +39,55 @@ None.
 TASK-0401: Build graph response model.
 
 ## 2026-05-21
+
+### TASK-0401 to TASK-0403: Graph Engine
+
+Status: In Progress
+
+Summary:
+
+- Added graph models for commit nodes, edges, and the commit graph response.
+- Built deterministic graph data from commits, branches, tags, and HEAD.
+- Added parent and merge edges plus simple lane assignment and SVG-ready coordinates.
+- Added a thin Tauri graph loading command and matching frontend graph types/store.
+- Added Rust unit tests for linear, branch, merge, tag, and HEAD cases.
+
+Files changed:
+
+- `src-tauri/src/app/graph_service.rs`
+- `src-tauri/src/app/mod.rs`
+- `src-tauri/src/commands/graph_commands.rs`
+- `src-tauri/src/commands/mod.rs`
+- `src-tauri/src/graph/graph_builder.rs`
+- `src-tauri/src/graph/mod.rs`
+- `src-tauri/src/lib.rs`
+- `src-tauri/src/models/graph.rs`
+- `src-tauri/src/models/mod.rs`
+- `src/stores/graphStore.ts`
+- `src/types/graph.ts`
+- `PROGRESS.md`
+
+Tests run:
+
+- `cargo fmt --check`
+- `cargo fmt`
+- `cargo check`
+- `cargo test`
+- `cargo clippy -- -D warnings`
+- `npm run typecheck`
+- `npm run lint`
+
+Result:
+
+- Passed.
+
+Issues found:
+
+- None.
+
+Next recommended task:
+
+- TASK-0403: Add graph loading command.
 
 ### Phase 3 quality check
 
