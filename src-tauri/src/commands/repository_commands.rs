@@ -2,6 +2,8 @@ use crate::app::repository_service;
 use crate::errors::AppError;
 use crate::models::branch::BranchInfo;
 use crate::models::commit::CommitInfo;
+use crate::models::compare::BranchComparison;
+use crate::models::diff::{ChangedFile, CommitFileDiff};
 use crate::models::repository::RepositorySummary;
 use crate::models::tag::TagInfo;
 
@@ -26,4 +28,30 @@ pub fn load_recent_commits(
     limit: Option<usize>,
 ) -> Result<Vec<CommitInfo>, AppError> {
     repository_service::load_recent_commits(path, limit)
+}
+
+#[tauri::command]
+pub fn load_commit_changed_files(
+    path: String,
+    commit_hash: String,
+) -> Result<Vec<ChangedFile>, AppError> {
+    repository_service::load_changed_files(path, commit_hash)
+}
+
+#[tauri::command]
+pub fn load_commit_file_diff(
+    path: String,
+    commit_hash: String,
+    file_path: String,
+) -> Result<CommitFileDiff, AppError> {
+    repository_service::load_file_diff(path, commit_hash, file_path)
+}
+
+#[tauri::command]
+pub fn compare_branches(
+    path: String,
+    base_branch: String,
+    target_branch: String,
+) -> Result<BranchComparison, AppError> {
+    repository_service::compare_branches(path, base_branch, target_branch)
 }

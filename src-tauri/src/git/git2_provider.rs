@@ -2,12 +2,14 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
-use git2::{BranchType, Repository, Sort};
+use git2::{BranchType, Delta, DiffFindOptions, DiffOptions, Oid, Patch, Repository, Sort};
 
 use crate::errors::AppError;
 use crate::git::provider::GitProvider;
 use crate::models::branch::BranchInfo;
 use crate::models::commit::CommitInfo;
+use crate::models::compare::BranchComparison;
+use crate::models::diff::{ChangedFile, ChangedFileStatus, CommitFileDiff};
 use crate::models::repository::RepositorySummary;
 use crate::models::tag::TagInfo;
 
@@ -15,6 +17,9 @@ pub struct Git2Provider {
     repo: Repository,
     path: PathBuf,
 }
+
+const MAX_RENDERED_DIFF_BYTES: usize = 200_000;
+const MAX_DIFF_BLOB_BYTES: i64 = 1_000_000;
 
 impl GitProvider for Git2Provider {
     fn open(path: &str) -> Result<Self, AppError> {
@@ -143,6 +148,227 @@ impl GitProvider for Git2Provider {
 
         Ok(commits)
     }
+
+    fn changed_files(&self, commit_hash: &str) -> Result<Vec<ChangedFile>, AppError> {
+        let commit = self.find_commit(commit_hash)?;
+        let (base_tree, target_tree) = self.commit_trees(&commit)?;
+        let mut diff_options = DiffOptions::new();
+        let mut diff = self
+            .repo
+            .diff_tree_to_tree(
+                base_tree.as_ref(),
+                Some(&target_tree),
+                Some(&mut diff_options),
+            )
+            .map_err(map_git_read_error)?;
+
+        let mut find_options = DiffFindOptions::new();
+        find_options.renames(true);
+        let _ = diff.find_similar(Some(&mut find_options));
+
+        let mut changed_files = Vec::new();
+        for delta in diff.deltas() {
+            let status = map_delta_status(delta.status());
+            if status.is_none() {
+                continue;
+            }
+
+            let old_path = delta.old_file().path().map(path_to_string);
+            let new_path = delta.new_file().path().map(path_to_string);
+            let path = preferred_path(delta.status(), old_path.as_deref(), new_path.as_deref());
+
+            changed_files.push(ChangedFile {
+                path,
+                previous_path: if delta.status() == Delta::Renamed {
+                    old_path
+                } else {
+                    None
+                },
+                status: status.expect("status checked above"),
+            });
+        }
+
+        Ok(changed_files)
+    }
+
+    fn file_diff(&self, commit_hash: &str, file_path: &str) -> Result<CommitFileDiff, AppError> {
+        let normalized_path = normalize_pathspec(file_path)?;
+        let commit = self.find_commit(commit_hash)?;
+        let (base_tree, target_tree) = self.commit_trees(&commit)?;
+
+        let mut diff_options = DiffOptions::new();
+        diff_options
+            .context_lines(3)
+            .max_size(MAX_DIFF_BLOB_BYTES)
+            .pathspec(&normalized_path);
+        let mut diff = self
+            .repo
+            .diff_tree_to_tree(
+                base_tree.as_ref(),
+                Some(&target_tree),
+                Some(&mut diff_options),
+            )
+            .map_err(map_git_read_error)?;
+
+        let mut find_options = DiffFindOptions::new();
+        find_options.renames(true);
+        let _ = diff.find_similar(Some(&mut find_options));
+
+        let mut matching_delta_index: Option<usize> = None;
+        let mut normalized_status = ChangedFileStatus::Modified;
+        let mut is_binary = false;
+
+        for (index, delta) in diff.deltas().enumerate() {
+            let old_path = delta.old_file().path().map(path_to_string);
+            let new_path = delta.new_file().path().map(path_to_string);
+            let old_matches = old_path.as_deref() == Some(normalized_path.as_str());
+            let new_matches = new_path.as_deref() == Some(normalized_path.as_str());
+
+            if !(old_matches || new_matches) {
+                continue;
+            }
+
+            matching_delta_index = Some(index);
+            normalized_status =
+                map_delta_status(delta.status()).unwrap_or(ChangedFileStatus::Modified);
+            is_binary = delta.flags().is_binary()
+                || delta.old_file().is_binary()
+                || delta.new_file().is_binary()
+                || self.diff_file_blob_is_binary(delta.old_file())?
+                || self.diff_file_blob_is_binary(delta.new_file())?;
+            break;
+        }
+
+        let Some(delta_index) = matching_delta_index else {
+            return Err(AppError::read_failure("Could not load diff for this file."));
+        };
+
+        if is_binary {
+            return Ok(CommitFileDiff {
+                commit_hash: commit.id().to_string(),
+                path: normalized_path,
+                status: normalized_status,
+                is_binary: true,
+                is_truncated: false,
+                diff_text: "Binary file diff is not shown.".to_owned(),
+            });
+        }
+
+        let Some(mut patch) = Patch::from_diff(&diff, delta_index).map_err(map_git_read_error)?
+        else {
+            return Ok(CommitFileDiff {
+                commit_hash: commit.id().to_string(),
+                path: normalized_path,
+                status: normalized_status,
+                is_binary: false,
+                is_truncated: false,
+                diff_text: "No textual diff available.".to_owned(),
+            });
+        };
+
+        let diff_buf = patch.to_buf().map_err(map_git_read_error)?;
+        let mut diff_text = String::from_utf8_lossy(&diff_buf).into_owned();
+        let original_len = diff_text.len();
+        let is_truncated = original_len > MAX_RENDERED_DIFF_BYTES;
+
+        if is_truncated {
+            truncate_diff_text(&mut diff_text, MAX_RENDERED_DIFF_BYTES);
+        }
+
+        Ok(CommitFileDiff {
+            commit_hash: commit.id().to_string(),
+            path: normalized_path,
+            status: normalized_status,
+            is_binary: false,
+            is_truncated,
+            diff_text,
+        })
+    }
+
+    fn compare_branches(
+        &self,
+        base_branch: &str,
+        target_branch: &str,
+    ) -> Result<BranchComparison, AppError> {
+        let base_name = normalize_branch_name(base_branch)?;
+        let target_name = normalize_branch_name(target_branch)?;
+
+        let base_oid = self.resolve_branch_to_oid(base_name)?;
+        let target_oid = self.resolve_branch_to_oid(target_name)?;
+        let (ahead, behind) = self
+            .repo
+            .graph_ahead_behind(target_oid, base_oid)
+            .map_err(map_git_read_error)?;
+        let merge_base = self
+            .repo
+            .merge_base(base_oid, target_oid)
+            .ok()
+            .map(|oid| oid.to_string());
+
+        Ok(BranchComparison {
+            base_branch: base_name.to_owned(),
+            target_branch: target_name.to_owned(),
+            ahead,
+            behind,
+            merge_base,
+        })
+    }
+}
+
+impl Git2Provider {
+    fn find_commit(&self, commit_hash: &str) -> Result<git2::Commit<'_>, AppError> {
+        let oid = Oid::from_str(commit_hash.trim())
+            .map_err(|_| AppError::invalid_path("Invalid commit hash."))?;
+        self.repo.find_commit(oid).map_err(map_git_read_error)
+    }
+
+    fn commit_trees<'a>(
+        &'a self,
+        commit: &git2::Commit<'a>,
+    ) -> Result<(Option<git2::Tree<'a>>, git2::Tree<'a>), AppError> {
+        let target_tree = commit.tree().map_err(map_git_read_error)?;
+        let base_tree = if commit.parent_count() == 0 {
+            None
+        } else {
+            Some(
+                commit
+                    .parent(0)
+                    .map_err(map_git_read_error)?
+                    .tree()
+                    .map_err(map_git_read_error)?,
+            )
+        };
+
+        Ok((base_tree, target_tree))
+    }
+
+    fn resolve_branch_to_oid(&self, branch_name: &str) -> Result<Oid, AppError> {
+        let shorthand_reference = format!("refs/heads/{branch_name}");
+        let remote_reference = format!("refs/remotes/{branch_name}");
+        let reference = self
+            .repo
+            .find_reference(&shorthand_reference)
+            .or_else(|_| self.repo.find_reference(&remote_reference))
+            .or_else(|_| self.repo.find_reference(branch_name))
+            .map_err(map_git_read_error)?;
+
+        reference
+            .peel_to_commit()
+            .map(|commit| commit.id())
+            .map_err(map_git_read_error)
+    }
+
+    fn diff_file_blob_is_binary(&self, file: git2::DiffFile<'_>) -> Result<bool, AppError> {
+        if file.id().is_zero() || file.size() > MAX_DIFF_BLOB_BYTES as u64 {
+            return Ok(false);
+        }
+
+        match self.repo.find_blob(file.id()) {
+            Ok(blob) => Ok(blob.is_binary()),
+            Err(error) if error.code() == git2::ErrorCode::NotFound => Ok(false),
+            Err(error) => Err(map_git_read_error(error)),
+        }
+    }
 }
 
 fn repository_name(path: &Path) -> String {
@@ -179,6 +405,55 @@ fn tag_target(repo: &Repository, name: &str) -> Option<String> {
         .ok()
         .map(|commit| commit.id().to_string())
         .or_else(|| reference.target().map(|target| target.to_string()))
+}
+
+fn normalize_pathspec(path: &str) -> Result<String, AppError> {
+    let trimmed = path.trim();
+    if trimmed.is_empty() {
+        return Err(AppError::invalid_path("Select a changed file first."));
+    }
+
+    Ok(trimmed.replace('\\', "/"))
+}
+
+fn normalize_branch_name(name: &str) -> Result<&str, AppError> {
+    let trimmed = name.trim();
+    if trimmed.is_empty() {
+        return Err(AppError::invalid_path("Select both branches first."));
+    }
+
+    Ok(trimmed)
+}
+
+fn path_to_string(path: &Path) -> String {
+    path.to_string_lossy().replace('\\', "/")
+}
+
+fn preferred_path(status: Delta, old_path: Option<&str>, new_path: Option<&str>) -> String {
+    match status {
+        Delta::Deleted => old_path.or(new_path).unwrap_or("Unknown path").to_owned(),
+        _ => new_path.or(old_path).unwrap_or("Unknown path").to_owned(),
+    }
+}
+
+fn map_delta_status(status: Delta) -> Option<ChangedFileStatus> {
+    match status {
+        Delta::Added => Some(ChangedFileStatus::Added),
+        Delta::Modified => Some(ChangedFileStatus::Modified),
+        Delta::Deleted => Some(ChangedFileStatus::Deleted),
+        Delta::Renamed => Some(ChangedFileStatus::Renamed),
+        _ => None,
+    }
+}
+
+fn truncate_diff_text(diff_text: &mut String, max_bytes: usize) {
+    let mut truncate_at = max_bytes.min(diff_text.len());
+    while !diff_text.is_char_boundary(truncate_at) {
+        truncate_at -= 1;
+    }
+
+    diff_text.truncate(truncate_at);
+    diff_text.push_str("\n\n[diff truncated for safety]");
 }
 
 fn map_metadata_error(error: io::Error) -> AppError {
@@ -221,6 +496,8 @@ mod tests {
     use std::time::{SystemTime, UNIX_EPOCH};
 
     use git2::{Oid, Repository, Signature};
+
+    use crate::models::diff::ChangedFileStatus;
 
     use super::{Git2Provider, GitProvider};
 
@@ -437,6 +714,167 @@ mod tests {
         assert!(commits.is_empty());
     }
 
+    #[test]
+    fn reads_changed_files_with_statuses() {
+        let test_dir = TestDir::new("changed_files");
+        let repo = Repository::init(&test_dir.path).expect("test repository should initialize");
+        let first_id = create_commit(&repo, "First commit", &[]);
+        let first = repo
+            .find_commit(first_id)
+            .expect("first commit should be readable");
+
+        fs::write(repo.workdir().unwrap().join("notes.txt"), "v2")
+            .expect("updated file should be written");
+        let second_id =
+            create_commit_with_changes(&repo, "Second commit", &[&first], &["notes.txt"], &[], &[]);
+        drop(first);
+        drop(repo);
+
+        let provider = open_provider(&test_dir.path);
+        let changed_files = provider
+            .changed_files(&second_id.to_string())
+            .expect("changed files should be readable");
+
+        assert!(changed_files.iter().any(
+            |file| file.path == "notes.txt" && matches!(file.status, ChangedFileStatus::Added)
+        ));
+    }
+
+    #[test]
+    fn loads_text_diff_for_selected_file() {
+        let test_dir = TestDir::new("file_diff");
+        let repo = Repository::init(&test_dir.path).expect("test repository should initialize");
+        let first_id = create_commit(&repo, "First commit", &[]);
+        let first = repo
+            .find_commit(first_id)
+            .expect("first commit should be readable");
+
+        fs::write(repo.workdir().unwrap().join("notes.txt"), "hello\nworld\n")
+            .expect("initial file should be written");
+        let second_id =
+            create_commit_with_changes(&repo, "Second commit", &[&first], &["notes.txt"], &[], &[]);
+        drop(first);
+
+        let second = repo
+            .find_commit(second_id)
+            .expect("second commit should be readable");
+        fs::write(repo.workdir().unwrap().join("notes.txt"), "hello\nworld!\n")
+            .expect("updated file should be written");
+        let third_id =
+            create_commit_with_changes(&repo, "Third commit", &[&second], &["notes.txt"], &[], &[]);
+        drop(second);
+        drop(repo);
+
+        let provider = open_provider(&test_dir.path);
+        let diff = provider
+            .file_diff(&third_id.to_string(), "notes.txt")
+            .expect("file diff should load");
+
+        assert!(!diff.is_binary);
+        assert!(!diff.diff_text.is_empty());
+        assert!(diff.diff_text.contains("notes.txt"));
+    }
+
+    #[test]
+    fn handles_binary_file_diff_safely() {
+        let test_dir = TestDir::new("binary_diff");
+        let repo = Repository::init(&test_dir.path).expect("test repository should initialize");
+        let first_id = create_commit(&repo, "First commit", &[]);
+        let first = repo
+            .find_commit(first_id)
+            .expect("first commit should be readable");
+
+        fs::write(
+            repo.workdir().unwrap().join("asset.bin"),
+            [0_u8, 1, 2, 3, 0, 4, 5, 6],
+        )
+        .expect("binary file should be written");
+        let second_id =
+            create_commit_with_changes(&repo, "Second commit", &[&first], &["asset.bin"], &[], &[]);
+        drop(first);
+        drop(repo);
+
+        let provider = open_provider(&test_dir.path);
+        let diff = provider
+            .file_diff(&second_id.to_string(), "asset.bin")
+            .expect("binary diff should load");
+
+        assert!(diff.is_binary);
+        assert_eq!(diff.diff_text, "Binary file diff is not shown.");
+    }
+
+    #[test]
+    fn truncates_large_diff_text_on_char_boundary() {
+        let mut diff_text = format!("a{}", "é".repeat(100_000));
+
+        assert!(!diff_text.is_char_boundary(super::MAX_RENDERED_DIFF_BYTES));
+
+        super::truncate_diff_text(&mut diff_text, super::MAX_RENDERED_DIFF_BYTES);
+
+        assert!(diff_text.ends_with("[diff truncated for safety]"));
+        assert!(diff_text.starts_with(&format!("a{}", "é".repeat(99_999))));
+    }
+
+    #[test]
+    fn compares_branches_with_ahead_behind_counts() {
+        let test_dir = TestDir::new("compare_branches");
+        let repo = Repository::init(&test_dir.path).expect("test repository should initialize");
+        let first_id = create_commit(&repo, "First commit", &[]);
+        let first = repo
+            .find_commit(first_id)
+            .expect("first commit should be readable");
+        repo.branch("feature/test", &first, false)
+            .expect("feature branch should be created");
+
+        fs::write(repo.workdir().unwrap().join("main.txt"), "main branch")
+            .expect("main file should be written");
+        let second_id =
+            create_commit_with_changes(&repo, "Second commit", &[&first], &["main.txt"], &[], &[]);
+        let base_branch = repo
+            .head()
+            .expect("base branch head should exist")
+            .shorthand()
+            .expect("base branch should have shorthand")
+            .to_owned();
+
+        repo.set_head_detached(first_id)
+            .expect("should move to first commit");
+        fs::write(
+            repo.workdir().unwrap().join("feature.txt"),
+            "feature branch",
+        )
+        .expect("feature file should be written");
+        let second_feature_id = create_commit_with_changes(
+            &repo,
+            "Feature commit",
+            &[&first],
+            &["feature.txt"],
+            &[],
+            &[],
+        );
+        repo.reference(
+            "refs/heads/feature/test",
+            second_feature_id,
+            true,
+            "move feature branch",
+        )
+        .expect("feature reference should move");
+
+        repo.set_head_detached(second_id)
+            .expect("should move back to main commit");
+        drop(first);
+        drop(repo);
+
+        let provider = open_provider(&test_dir.path);
+        let comparison = provider
+            .compare_branches(&base_branch, "feature/test")
+            .expect("branch comparison should work");
+
+        assert_eq!(comparison.ahead, 1);
+        assert_eq!(comparison.behind, 1);
+        assert!(comparison.merge_base.is_some());
+    }
+
     fn open_provider(path: &std::path::Path) -> Git2Provider {
         Git2Provider::open(&path.to_string_lossy()).expect("provider should open")
     }
@@ -450,6 +888,53 @@ mod tests {
         index
             .add_path(std::path::Path::new(&file_name))
             .expect("test file should be added to index");
+        index.write().expect("index should be written");
+        let tree_id = index.write_tree().expect("tree should be written");
+        let tree = repo.find_tree(tree_id).expect("tree should be readable");
+        let signature = signature();
+
+        repo.commit(
+            Some("HEAD"),
+            &signature,
+            &signature,
+            message,
+            &tree,
+            parents,
+        )
+        .expect("test commit should be created")
+    }
+
+    fn create_commit_with_changes(
+        repo: &Repository,
+        message: &str,
+        parents: &[&git2::Commit<'_>],
+        added_or_modified: &[&str],
+        removed: &[&str],
+        renamed: &[(&str, &str)],
+    ) -> Oid {
+        let mut index = repo.index().expect("repository index should open");
+
+        for path in added_or_modified {
+            index
+                .add_path(std::path::Path::new(path))
+                .expect("file should be added to index");
+        }
+
+        for path in removed {
+            index
+                .remove_path(std::path::Path::new(path))
+                .expect("file should be removed from index");
+        }
+
+        for (old_path, new_path) in renamed {
+            index
+                .remove_path(std::path::Path::new(old_path))
+                .expect("old file should be removed from index");
+            index
+                .add_path(std::path::Path::new(new_path))
+                .expect("new file should be added to index");
+        }
+
         index.write().expect("index should be written");
         let tree_id = index.write_tree().expect("tree should be written");
         let tree = repo.find_tree(tree_id).expect("tree should be readable");

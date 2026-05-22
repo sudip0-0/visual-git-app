@@ -26,6 +26,31 @@ export type CommitInfo = {
   isMerge: boolean;
 };
 
+export type ChangedFileStatus = "ADDED" | "MODIFIED" | "DELETED" | "RENAMED";
+
+export type ChangedFile = {
+  path: string;
+  previousPath?: string;
+  status: ChangedFileStatus;
+};
+
+export type CommitFileDiff = {
+  commitHash: string;
+  path: string;
+  status: ChangedFileStatus;
+  isBinary: boolean;
+  isTruncated: boolean;
+  diffText: string;
+};
+
+export type BranchComparison = {
+  baseBranch: string;
+  targetBranch: string;
+  ahead: number;
+  behind: number;
+  mergeBase?: string;
+};
+
 export type RepositoryData = {
   branches: BranchInfo[];
   tags: TagInfo[];

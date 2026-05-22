@@ -2,17 +2,17 @@
 
 ## Current Project Status
 
-Git data engine, graph engine, graph UI, and client-side search/filter interactions implemented.
+Git data engine, graph engine, graph UI, client-side search/filter interactions, commit changed-file inspection, on-demand diff viewing, and branch comparison are implemented.
 
-The app can open a native folder picker, validate a selected local Git repository in Rust, load read-only repository metadata through a `GitProvider` abstraction, list local and remote branches, list tags, load recent commits with parent hashes and merge detection, build graph-ready commit data with lanes, edges, refs, and HEAD markers, render a scrollable SVG commit graph with selectable commits plus pan and zoom controls, search commits, highlight branch reachability, and select tagged commits. Rust and frontend checks pass.
+The app can open a native folder picker, validate a selected local Git repository in Rust, load read-only repository metadata through a `GitProvider` abstraction, list local and remote branches, list tags, load recent commits with parent hashes and merge detection, build graph-ready commit data with lanes, edges, refs, and HEAD markers, render a scrollable SVG commit graph with selectable commits plus pan and zoom controls, search commits, highlight branch reachability, select tagged commits, show changed files for a selected commit, load file diffs only when requested, safely handle truncated and binary diffs, and compare branches with ahead/behind counts plus merge base. Rust and frontend checks pass.
 
 ## Current Phase
 
-Phase 6: Search and Filters
+Phase 7: Diff Viewer and Branch Comparison
 
 ## Current Focus
 
-Ready for TASK-0701: Commit changed files.
+Ready for Phase 8 planning.
 
 ## Completed
 
@@ -36,9 +36,44 @@ None.
 
 ## Next Recommended Task
 
-TASK-0701: Commit changed files.
+TASK-0801: HEAD and refs explorer.
 
 ## 2026-05-22
+
+### TASK-0701 to TASK-0703: Diff viewer and branch comparison
+
+Status: Done
+
+Summary:
+
+- Verified selected commits load changed files with status values where libgit2 provides them.
+- Verified file diffs are loaded only from explicit changed-file selection, not during commit selection.
+- Verified diff content is rendered as React text, not HTML, and no diff content logging exists.
+- Added safer binary detection for selected file diffs by checking blob content when diff flags are insufficient.
+- Added Unicode-safe truncation for large diff text so truncation cannot panic on a multi-byte character boundary.
+- Verified branch comparison returns target-ahead and target-behind counts plus merge base when available.
+- Verified the UI explains aligned, ahead, behind, and diverged branch states.
+- Verified no checkout, merge, rebase, pull, push, fetch, or production Git write operation was added.
+
+Files changed:
+
+- `src-tauri/src/git/git2_provider.rs`
+- `TASKS.md`
+- `PROGRESS.md`
+
+Tests run:
+
+- `cargo test`
+- `cargo check`
+- `cargo fmt --check`
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test`
+
+Risks:
+
+- The changed-file list is scroll-contained in the details panel but is not virtualized yet.
+- Branch comparison is based on branch refs available locally; no network fetch is performed by design.
 
 ### TASK-0601 to TASK-0603: Search and filters
 

@@ -6,6 +6,8 @@ use crate::git::provider::GitProvider;
 use crate::git::repository_validator;
 use crate::models::branch::BranchInfo;
 use crate::models::commit::CommitInfo;
+use crate::models::compare::BranchComparison;
+use crate::models::diff::{ChangedFile, CommitFileDiff};
 use crate::models::repository::RepositorySummary;
 use crate::models::tag::TagInfo;
 
@@ -37,6 +39,34 @@ pub fn load_recent_commits(
     open_provider(path)?.recent_commits(limit)
 }
 
+pub fn load_changed_files(path: String, commit_hash: String) -> Result<Vec<ChangedFile>, AppError> {
+    let commit_hash = validate_non_empty(&commit_hash, "Select a commit first.")?;
+
+    open_provider(path)?.changed_files(commit_hash)
+}
+
+pub fn load_file_diff(
+    path: String,
+    commit_hash: String,
+    file_path: String,
+) -> Result<CommitFileDiff, AppError> {
+    let commit_hash = validate_non_empty(&commit_hash, "Select a commit first.")?;
+    let file_path = validate_non_empty(&file_path, "Select a changed file first.")?;
+
+    open_provider(path)?.file_diff(commit_hash, file_path)
+}
+
+pub fn compare_branches(
+    path: String,
+    base_branch: String,
+    target_branch: String,
+) -> Result<BranchComparison, AppError> {
+    let base_branch = validate_non_empty(&base_branch, "Select a base branch first.")?;
+    let target_branch = validate_non_empty(&target_branch, "Select a target branch first.")?;
+
+    open_provider(path)?.compare_branches(base_branch, target_branch)
+}
+
 fn open_provider(path: String) -> Result<Git2Provider, AppError> {
     let trimmed_path = validate_path(&path)?;
 
@@ -51,6 +81,16 @@ fn validate_path(path: &str) -> Result<&str, AppError> {
     }
 
     Ok(trimmed_path)
+}
+
+fn validate_non_empty<'a>(value: &'a str, message: &str) -> Result<&'a str, AppError> {
+    let trimmed = value.trim();
+
+    if trimmed.is_empty() {
+        return Err(AppError::invalid_path(message));
+    }
+
+    Ok(trimmed)
 }
 
 #[cfg(test)]
@@ -71,5 +111,32 @@ mod tests {
             load_recent_commits("   ".to_owned(), Some(usize::MAX)).expect_err("path should fail");
 
         assert_eq!(error.code, crate::errors::AppErrorCode::InvalidPath);
+    }
+
+    #[test]
+    fn rejects_empty_commit_hash_for_changed_files() {
+        let error = load_changed_files("repo".to_owned(), "   ".to_owned())
+            .expect_err("empty commit hash should fail");
+
+        assert_eq!(error.code, crate::errors::AppErrorCode::InvalidPath);
+        assert_eq!(error.message, "Select a commit first.");
+    }
+
+    #[test]
+    fn rejects_empty_file_path_for_diff() {
+        let error = load_file_diff("repo".to_owned(), "abc".to_owned(), "   ".to_owned())
+            .expect_err("empty file path should fail");
+
+        assert_eq!(error.code, crate::errors::AppErrorCode::InvalidPath);
+        assert_eq!(error.message, "Select a changed file first.");
+    }
+
+    #[test]
+    fn rejects_empty_branches_for_compare() {
+        let error = compare_branches("repo".to_owned(), "main".to_owned(), "   ".to_owned())
+            .expect_err("empty branch should fail");
+
+        assert_eq!(error.code, crate::errors::AppErrorCode::InvalidPath);
+        assert_eq!(error.message, "Select a target branch first.");
     }
 }

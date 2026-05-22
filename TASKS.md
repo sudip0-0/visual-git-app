@@ -639,7 +639,7 @@ Checks:
 
 ### TASK-0701: Commit changed files
 
-Status: Todo
+Status: Done
 
 Description:
 Show files changed in selected commit.
@@ -655,7 +655,7 @@ Acceptance Criteria:
 
 ### TASK-0702: Diff viewer
 
-Status: Todo
+Status: Done
 
 Description:
 Show file diff for selected commit.
@@ -671,7 +671,7 @@ Acceptance Criteria:
 
 ### TASK-0703: Compare branches
 
-Status: Todo
+Status: Done
 
 Description:
 Show ahead/behind and merge base between two branches.

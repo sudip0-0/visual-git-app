@@ -13,6 +13,9 @@ pub fn run() {
             commands::repository_commands::list_branches,
             commands::repository_commands::list_tags,
             commands::repository_commands::load_recent_commits,
+            commands::repository_commands::load_commit_changed_files,
+            commands::repository_commands::load_commit_file_diff,
+            commands::repository_commands::compare_branches,
             commands::graph_commands::load_commit_graph
         ])
         .run(tauri::generate_context!())

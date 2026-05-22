@@ -1,8 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { DetailsPanel } from "./DetailsPanel";
 import { GraphArea } from "./GraphArea";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
+import { useCommitDetailsStore } from "../../stores/commitDetailsStore";
 import { useGraphStore } from "../../stores/graphStore";
 import { useRepositoryStore } from "../../stores/repositoryStore";
 import { useUiStore } from "../../stores/uiStore";
@@ -10,10 +11,18 @@ import { useUiStore } from "../../stores/uiStore";
 export function AppShell() {
   const repositoryStore = useRepositoryStore();
   const graphStore = useGraphStore();
+  const commitDetailsStore = useCommitDetailsStore();
   const uiStore = useUiStore();
   const loadedGraphPath = useRef<string | null>(null);
   const isLoading = repositoryStore.isLoading || graphStore.isLoading;
   const error = repositoryStore.error ?? graphStore.error;
+  const branchOptions = useMemo(() => {
+    const branchNames = repositoryStore.repositoryData?.branches.map(
+      (branch) => branch.name,
+    ) ?? [];
+
+    return Array.from(new Set(branchNames));
+  }, [repositoryStore.repositoryData?.branches]);
 
   useEffect(() => {
     const path = repositoryStore.repository?.path ?? null;
@@ -21,6 +30,7 @@ export function AppShell() {
     if (!path) {
       loadedGraphPath.current = null;
       graphStore.clearGraph();
+      commitDetailsStore.clear();
       return;
     }
 
@@ -32,7 +42,53 @@ export function AppShell() {
     void graphStore.loadCommitGraph(path, 500).catch(() => {
       // The graph store keeps the user-safe error for the viewport.
     });
-  }, [graphStore, repositoryStore.repository?.path]);
+  }, [commitDetailsStore, graphStore, repositoryStore.repository?.path]);
+
+  useEffect(() => {
+    const path = repositoryStore.repository?.path;
+    const commitHash = graphStore.selectedCommit?.id;
+
+    if (!path || !commitHash) {
+      return;
+    }
+
+    void commitDetailsStore.loadChangedFiles(path, commitHash).catch(() => {
+      // Commit details store keeps user-safe error state.
+    });
+  }, [
+    commitDetailsStore,
+    graphStore.selectedCommit?.id,
+    repositoryStore.repository?.path,
+  ]);
+
+  useEffect(() => {
+    const path = repositoryStore.repository?.path;
+    if (!path || branchOptions.length < 2) {
+      return;
+    }
+
+    const baseBranch =
+      repositoryStore.repository?.currentBranch &&
+      branchOptions.includes(repositoryStore.repository.currentBranch)
+        ? repositoryStore.repository.currentBranch
+        : branchOptions[0];
+    const targetBranch = branchOptions.find((branch) => branch !== baseBranch);
+
+    if (!baseBranch || !targetBranch) {
+      return;
+    }
+
+    void commitDetailsStore
+      .loadBranchComparison(path, baseBranch, targetBranch)
+      .catch(() => {
+        // Commit details store keeps user-safe error state.
+      });
+  }, [
+    branchOptions,
+    commitDetailsStore,
+    repositoryStore.repository?.currentBranch,
+    repositoryStore.repository?.path,
+  ]);
 
   return (
     <div className="flex min-h-screen flex-col bg-[#090b10] text-slate-100">
@@ -78,8 +134,46 @@ export function AppShell() {
           zoom={uiStore.graphZoom}
         />
         <DetailsPanel
+          branchComparison={commitDetailsStore.branchComparison}
+          branchComparisonError={commitDetailsStore.branchComparisonError}
+          branchOptions={branchOptions}
+          changedFiles={commitDetailsStore.changedFiles}
+          changedFilesError={commitDetailsStore.changedFilesError}
+          diffError={commitDetailsStore.diffError}
+          isBranchComparisonLoading={commitDetailsStore.isBranchComparisonLoading}
+          isChangedFilesLoading={commitDetailsStore.isChangedFilesLoading}
+          isDiffLoading={commitDetailsStore.isDiffLoading}
+          onSelectBranchComparison={(baseBranch, targetBranch) => {
+            const path = repositoryStore.repository?.path;
+
+            if (!path) {
+              return;
+            }
+
+            void commitDetailsStore
+              .loadBranchComparison(path, baseBranch, targetBranch)
+              .catch(() => {
+                // Commit details store keeps user-safe error state.
+              });
+          }}
+          onSelectChangedFile={(filePath) => {
+            const path = repositoryStore.repository?.path;
+            const commitHash = graphStore.selectedCommit?.id;
+
+            if (!path || !commitHash) {
+              return;
+            }
+
+            void commitDetailsStore
+              .loadFileDiff(path, commitHash, filePath)
+              .catch(() => {
+                // Commit details store keeps user-safe error state.
+              });
+          }}
           repository={repositoryStore.repository}
+          selectedChangedFilePath={commitDetailsStore.selectedFilePath}
           selectedCommit={graphStore.selectedCommit}
+          selectedDiff={commitDetailsStore.selectedDiff}
         />
       </div>
     </div>
