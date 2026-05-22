@@ -40,6 +40,44 @@ Define the next scoped phase before adding more Git internals features.
 
 ## 2026-05-22
 
+### Phase 8 quality check
+
+Status: Done
+
+Summary:
+
+- Verified Git Internals mode covers raw HEAD, HEAD-to-ref explanation, current branch ref target commit, detached HEAD explanation, selected commit raw metadata, tree hash, parent hashes, object path explanation, loose-object parser isolation, and packfile limitations.
+- Made Git Internals less intrusive by placing it behind a collapsed details disclosure in the right panel.
+- Added size limits to the educational loose-object parser before and during decompression.
+- Added Rust coverage for symbolic HEAD internals, detached HEAD internals, selected commit internals, and oversized loose-object rejection.
+- Confirmed the custom loose-object parser remains separate from `Git2Provider` and does not replace the production `git2` flow.
+- Confirmed no production repository mutation, repository file execution, shell execution, or unsafe HTML rendering paths were added.
+
+Files changed:
+
+- `src-tauri/src/git/git2_provider.rs`
+- `src-tauri/src/git/loose_object_parser.rs`
+- `src/components/internals/GitInternalsPanel.tsx`
+- `PROGRESS.md`
+
+Tests run:
+
+- `cargo test`
+- `cargo check`
+- `cargo fmt --check`
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test`
+- Source safety scan for Git write operations, shell execution, repository file execution, and unsafe HTML rendering
+
+Result:
+
+- Passed.
+
+Risks:
+
+- Packfile parsing remains intentionally unsupported; packed commits are reported as not loose.
+
 ### TASK-0801 to TASK-0803: Git internals mode
 
 Status: Done

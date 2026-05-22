@@ -14,21 +14,20 @@ export function GitInternalsPanel({
   isLoading,
 }: GitInternalsPanelProps) {
   return (
-    <section className="mt-6 space-y-3">
-      <div>
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-          Git Internals
-        </h2>
-        <p className="mt-1 text-xs text-slate-500">
+    <details className="mt-6 rounded-md border border-slate-800 bg-slate-900/40 p-3">
+      <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wider text-slate-400">
+        Git Internals
+      </summary>
+      <div className="mt-3 space-y-3">
+        <p className="text-xs text-slate-500">
           Read-only view of how Git stores the current position and selected commit.
         </p>
-      </div>
 
-      {isLoading ? <p className="text-xs text-slate-500">Loading internals...</p> : null}
-      {error ? <p className="text-xs text-red-200">{error.message}</p> : null}
+        {isLoading ? <p className="text-xs text-slate-500">Loading internals...</p> : null}
+        {error ? <p className="text-xs text-red-200">{error.message}</p> : null}
 
-      {internals ? (
-        <>
+        {internals ? (
+          <>
           <InternalsCard title="HEAD">
             <KeyValue label="Raw HEAD" value={internals.head.rawValue ?? "Unavailable"} />
             <KeyValue
@@ -130,9 +129,10 @@ export function GitInternalsPanel({
               ))}
             </ul>
           </InternalsCard>
-        </>
-      ) : null}
-    </section>
+          </>
+        ) : null}
+      </div>
+    </details>
   );
 }
 

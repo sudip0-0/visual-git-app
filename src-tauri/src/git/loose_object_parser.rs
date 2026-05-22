@@ -7,6 +7,9 @@ use flate2::read::ZlibDecoder;
 use crate::errors::AppError;
 use crate::models::internals::LooseCommitObject;
 
+const MAX_LOOSE_OBJECT_BYTES: u64 = 2_000_000;
+const MAX_DECOMPRESSED_OBJECT_BYTES: u64 = 4_000_000;
+
 pub struct LooseObjectParser {
     git_dir: PathBuf,
 }
@@ -112,13 +115,29 @@ fn loose_object_path(git_dir: &Path, hash: &str) -> PathBuf {
 }
 
 fn read_loose_object(path: &Path) -> Result<ParsedLooseObject, AppError> {
+    let metadata = fs::metadata(path)
+        .map_err(|_| AppError::read_failure("Could not read loose Git object."))?;
+    if metadata.len() > MAX_LOOSE_OBJECT_BYTES {
+        return Err(AppError::read_failure(
+            "Loose Git object is too large for the educational parser.",
+        ));
+    }
+
     let compressed =
         fs::read(path).map_err(|_| AppError::read_failure("Could not read loose Git object."))?;
     let mut decoder = ZlibDecoder::new(&compressed[..]);
     let mut decompressed = Vec::new();
-    decoder
+    let mut limited_decoder = decoder
+        .by_ref()
+        .take(MAX_DECOMPRESSED_OBJECT_BYTES.saturating_add(1));
+    limited_decoder
         .read_to_end(&mut decompressed)
         .map_err(|_| AppError::read_failure("Could not decompress loose Git object."))?;
+    if decompressed.len() as u64 > MAX_DECOMPRESSED_OBJECT_BYTES {
+        return Err(AppError::read_failure(
+            "Loose Git object expands too large for the educational parser.",
+        ));
+    }
 
     let Some(nul_index) = decompressed.iter().position(|byte| *byte == 0) else {
         return Err(AppError::read_failure(
@@ -233,6 +252,27 @@ mod tests {
 
         assert!(!parsed.is_available);
         assert!(parsed.explanation.contains("packfile"));
+    }
+
+    #[test]
+    fn rejects_oversized_loose_object_before_decompressing() {
+        let test_dir = TestDir::new("oversized");
+        let git_dir = test_dir.path.join(".git");
+        let hash = "1234567890abcdef1234567890abcdef12345678";
+        let object_dir = git_dir.join("objects").join(&hash[0..2]);
+        fs::create_dir_all(&object_dir).expect("object directory should be created");
+        fs::write(
+            object_dir.join(&hash[2..]),
+            vec![0_u8; super::MAX_LOOSE_OBJECT_BYTES as usize + 1],
+        )
+        .expect("oversized object should be written");
+
+        let error = LooseObjectParser::new(git_dir)
+            .parse_commit(hash)
+            .expect_err("oversized object should fail");
+
+        assert_eq!(error.code, crate::errors::AppErrorCode::ReadFailure);
+        assert!(error.message.contains("too large"));
     }
 
     fn write_zlib_object(path: &Path, bytes: &[u8]) {

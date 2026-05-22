@@ -690,6 +690,64 @@ mod tests {
     }
 
     #[test]
+    fn reads_head_ref_internals() {
+        let test_dir = TestDir::new("head_internals");
+        let repo = Repository::init(&test_dir.path).expect("test repository should initialize");
+        let commit_id = create_commit(&repo, "Initial commit", &[]);
+        let head = repo.head().expect("head should resolve");
+        let ref_name = head.name().expect("head ref should have a name").to_owned();
+        drop(head);
+        drop(repo);
+
+        let provider = open_provider(&test_dir.path);
+        let internals = provider
+            .internals(None)
+            .expect("internals should be readable");
+
+        assert_eq!(
+            internals.head.raw_value.as_deref(),
+            Some(format!("ref: {ref_name}").as_str())
+        );
+        assert!(!internals.head.is_detached);
+        assert_eq!(
+            internals.head.current_ref_path.as_deref(),
+            Some(ref_name.as_str())
+        );
+        assert_eq!(
+            internals.head.ref_target_commit.as_deref(),
+            Some(commit_id.to_string().as_str())
+        );
+        assert!(internals.head.explanation.contains(&ref_name));
+    }
+
+    #[test]
+    fn explains_detached_head_internals() {
+        let test_dir = TestDir::new("detached_internals");
+        let repo = Repository::init(&test_dir.path).expect("test repository should initialize");
+        let commit_id = create_commit(&repo, "Initial commit", &[]);
+        repo.set_head_detached(commit_id)
+            .expect("test repository should detach HEAD");
+        drop(repo);
+
+        let provider = open_provider(&test_dir.path);
+        let internals = provider
+            .internals(None)
+            .expect("internals should be readable");
+
+        assert_eq!(
+            internals.head.raw_value.as_deref(),
+            Some(commit_id.to_string().as_str())
+        );
+        assert!(internals.head.is_detached);
+        assert!(internals.head.current_ref_path.is_none());
+        assert_eq!(
+            internals.head.resolved_commit.as_deref(),
+            Some(commit_id.to_string().as_str())
+        );
+        assert!(internals.head.explanation.contains("detached"));
+    }
+
+    #[test]
     fn lists_local_and_remote_branches() {
         let test_dir = TestDir::new("branches");
         let repo = Repository::init(&test_dir.path).expect("test repository should initialize");
@@ -782,6 +840,41 @@ mod tests {
         assert_eq!(commits.len(), 2);
         assert_eq!(second.parents, vec![first_id.to_string()]);
         assert!(!second.is_merge);
+    }
+
+    #[test]
+    fn reads_selected_commit_internals() {
+        let test_dir = TestDir::new("commit_internals");
+        let repo = Repository::init(&test_dir.path).expect("test repository should initialize");
+        let first_id = create_commit(&repo, "First commit", &[]);
+        let first = repo
+            .find_commit(first_id)
+            .expect("first commit should be readable");
+        let second_id = create_commit(&repo, "Second commit", &[&first]);
+        let second = repo
+            .find_commit(second_id)
+            .expect("second commit should be readable");
+        let tree_id = second.tree_id();
+        drop(first);
+        drop(second);
+        drop(repo);
+
+        let provider = open_provider(&test_dir.path);
+        let internals = provider
+            .internals(Some(&second_id.to_string()))
+            .expect("internals should be readable");
+        let commit = internals
+            .selected_commit
+            .expect("selected commit internals should be returned");
+
+        assert_eq!(commit.object_type, "commit");
+        assert_eq!(commit.commit_hash, second_id.to_string());
+        assert_eq!(commit.tree_hash, tree_id.to_string());
+        assert_eq!(commit.parent_hashes, vec![first_id.to_string()]);
+        assert!(commit.author.is_some());
+        assert!(commit.committer.is_some());
+        assert_eq!(commit.message, "Second commit");
+        assert!(commit.object_path_explanation.contains(".git/objects"));
     }
 
     #[test]
