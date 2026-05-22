@@ -10,6 +10,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             commands::repository_commands::validate_repository,
+            commands::repository_commands::clone_repository_from_url,
             commands::repository_commands::list_branches,
             commands::repository_commands::list_tags,
             commands::repository_commands::load_recent_commits,

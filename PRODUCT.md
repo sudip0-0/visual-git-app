@@ -6,7 +6,7 @@ Visual Git Commit Graph Desktop
 
 ## One-Line Description
 
-A Rust + Tauri desktop app that opens local Git repositories and visualizes commit history, branch relationships, tags, and Git internals through an interactive graph.
+A Rust + Tauri desktop app that opens local Git repositories or public GitHub repository URLs and visualizes commit history, branch relationships, tags, and Git internals through an interactive graph.
 
 ## Product Vision
 
@@ -82,14 +82,19 @@ A command-line Git wrapper.
 
 The MVP is a read-only desktop app that opens a local Git repository, reads recent commit history using Rust, builds a commit graph, and displays an interactive branch graph with commit details, branch filters, and search.
 
+Post-MVP, the app can also accept a public GitHub HTTPS repository URL, clone it into an app-managed local cache, and visualize the cached local clone. This is explicitly outside the original offline MVP scope.
+
 ## MVP Functional Requirements
 
 ### Repository Opening
 
 - User can open a local folder.
+- User can open a public GitHub repository URL after MVP.
 - App validates whether the folder is a Git repository.
+- App validates GitHub URLs before cloning.
 - App supports repositories where `.git` is a folder.
 - App should show a clear error for invalid folders.
+- App should show a clear error for invalid or private GitHub URLs.
 - App remembers recently opened repositories.
 
 ### Git Data Loading
@@ -147,8 +152,9 @@ When a commit is selected, show:
 
 - App should be read-only.
 - App must not modify Git repository state.
-- App should work offline.
-- App should not send repository data to external services.
+- Original MVP local repository opening should work offline.
+- Public GitHub URL opening requires an explicit network clone into local app cache.
+- The app should not send local repository data to external services.
 - App should load 500 recent commits in a normal repository without freezing the UI.
 - App should handle large repositories by limiting initial commit loading.
 - App should show loading states.
@@ -178,6 +184,8 @@ The MVP must not include:
 - remote API integrations
 - automatic background sync
 - repository mutation
+
+The first public GitHub URL feature remains out of scope for authentication, private repositories, refresh/fetch/pull, GitHub API calls, SSH remotes, and submodule initialization.
 
 ## Phase 2 Features
 
@@ -227,6 +235,15 @@ The MVP must not include:
 3. User selects a local folder.
 4. App validates Git repository.
 5. App loads repository metadata.
+6. App displays graph.
+
+### Flow 1b: Open Public GitHub Repository
+
+1. User launches app.
+2. User enters a public `https://github.com/owner/repo` URL.
+3. App validates the URL.
+4. App clones the repository into the app data cache if it is not already cached.
+5. App opens the cached local clone.
 6. App displays graph.
 
 ### Flow 2: Explore Commit

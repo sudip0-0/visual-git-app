@@ -18,7 +18,7 @@ path = "src/main.rs"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-git2 = { version = "0.20", default-features = false }
+git2 = { version = "0.20", default-features = false, features = ["https"] }
 flate2 = "1.1"
 tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"

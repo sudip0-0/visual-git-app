@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use crate::errors::AppError;
 use crate::git::git2_provider::Git2Provider;
+use crate::git::github_clone;
 use crate::git::loose_object_parser::LooseObjectParser;
 use crate::git::provider::GitProvider;
 use crate::git::repository_validator;
@@ -20,6 +21,13 @@ pub fn validate_repository(path: String) -> Result<RepositorySummary, AppError> 
     let trimmed_path = validate_path(&path)?;
 
     repository_validator::validate_repository_path(PathBuf::from(trimmed_path))
+}
+
+pub fn clone_repository_from_url(
+    url: String,
+    app_data_dir: PathBuf,
+) -> Result<RepositorySummary, AppError> {
+    github_clone::clone_repository_from_url(&url, &app_data_dir)
 }
 
 pub fn list_branches(path: String) -> Result<Vec<BranchInfo>, AppError> {

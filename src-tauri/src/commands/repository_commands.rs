@@ -7,10 +7,24 @@ use crate::models::diff::{ChangedFile, CommitFileDiff};
 use crate::models::internals::GitInternals;
 use crate::models::repository::RepositorySummary;
 use crate::models::tag::TagInfo;
+use tauri::Manager;
 
 #[tauri::command]
 pub fn validate_repository(path: String) -> Result<RepositorySummary, AppError> {
     repository_service::validate_repository(path)
+}
+
+#[tauri::command]
+pub fn clone_repository_from_url(
+    app_handle: tauri::AppHandle,
+    url: String,
+) -> Result<RepositorySummary, AppError> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|_| AppError::read_failure("Could not resolve the app data folder."))?;
+
+    repository_service::clone_repository_from_url(url, app_data_dir)
 }
 
 #[tauri::command]

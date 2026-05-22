@@ -151,6 +151,7 @@ export function AppShell() {
     <div className="flex h-screen flex-col overflow-hidden bg-[#090b10] text-slate-100">
       <TopBar
         isLoading={isLoading}
+        onCloneRepository={repositoryStore.cloneRepositoryFromUrl}
         onOpenRepository={repositoryStore.openRepositoryPicker}
         repository={repositoryStore.repository}
       />

@@ -1,8 +1,8 @@
 # Visual Git Commit Graph Desktop
 
-A read-only desktop app for exploring local Git history as an interactive graph.
+A read-only desktop app for exploring Git history as an interactive graph.
 
-The app opens a local repository, reads commit history with Rust and `git2`, and renders branches, tags, merges, diffs, branch comparison, and Git internals in a Tauri + React interface. It is built as a visual learning tool, not a Git client.
+The app opens a local repository or clones a public GitHub repository into an app-managed local cache, reads commit history with Rust and `git2`, and renders branches, tags, merges, diffs, branch comparison, and Git internals in a Tauri + React interface. It is built as a visual learning tool, not a Git client.
 
 ## Screenshots
 
@@ -15,6 +15,7 @@ Screenshots are planned for the portfolio release:
 ## Features
 
 - Open a local Git repository with the native folder picker.
+- Open a public GitHub repository URL by cloning it into the app cache.
 - Validate repository paths with safe Rust errors.
 - Remember recent repositories locally.
 - Load 500 recent commits by default.
@@ -107,6 +108,8 @@ Not included:
 - repository script execution
 - cloud sync or telemetry
 
+GitHub URL support is public-only and opt-in. It performs a network clone into the app data directory, then visualizes the cached local clone. It does not support private repositories, tokens, SSH, fetching, pulling, refreshing, or submodule initialization.
+
 ## Performance Notes
 
 - Initial graph loading is capped at 500 commits.
@@ -122,6 +125,8 @@ Not included:
 - The custom parser only handles loose commit objects.
 - The graph layout is intentionally simple and deterministic.
 - File watching is not implemented.
+- Public GitHub clones are cached locally and are not refreshed after the first clone.
+- Private GitHub repositories, SSH URLs, tokens, and GitHub API integration are not implemented.
 - Packaging has been tested only on the current Windows development environment.
 
 ## Roadmap

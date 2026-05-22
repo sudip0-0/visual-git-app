@@ -84,6 +84,30 @@ export function useRepositoryStore() {
   const [error, setError] = useState<RepositoryError | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  const loadRepositoryData = useCallback(
+    async (summary: RepositorySummary) => {
+      const [branches, tags, commits] = await Promise.all([
+        invoke<BranchInfo[]>("list_branches", { path: summary.path }),
+        invoke<TagInfo[]>("list_tags", { path: summary.path }),
+        invoke<CommitInfo[]>("load_recent_commits", {
+          path: summary.path,
+          limit: 500,
+        }),
+      ]);
+
+      setRepository(summary);
+      setRepositoryData({ branches, tags, commits });
+
+      const nextRecentRepositories = updateRecentRepositories(
+        recentRepositories,
+        summary,
+      );
+      setRecentRepositories(nextRecentRepositories);
+      writeRecentRepositories(nextRecentRepositories);
+    },
+    [recentRepositories],
+  );
+
   const validateRepositoryPath = useCallback(
     async (path: string) => {
       setIsLoading(true);
@@ -93,24 +117,7 @@ export function useRepositoryStore() {
         const summary = await invoke<RepositorySummary>("validate_repository", {
           path,
         });
-        const [branches, tags, commits] = await Promise.all([
-          invoke<BranchInfo[]>("list_branches", { path: summary.path }),
-          invoke<TagInfo[]>("list_tags", { path: summary.path }),
-          invoke<CommitInfo[]>("load_recent_commits", {
-            path: summary.path,
-            limit: 500,
-          }),
-        ]);
-
-        setRepository(summary);
-        setRepositoryData({ branches, tags, commits });
-
-        const nextRecentRepositories = updateRecentRepositories(
-          recentRepositories,
-          summary,
-        );
-        setRecentRepositories(nextRecentRepositories);
-        writeRecentRepositories(nextRecentRepositories);
+        await loadRepositoryData(summary);
       } catch (validationError) {
         setRepository(null);
         setRepositoryData(null);
@@ -119,7 +126,29 @@ export function useRepositoryStore() {
         setIsLoading(false);
       }
     },
-    [recentRepositories],
+    [loadRepositoryData],
+  );
+
+  const cloneRepositoryFromUrl = useCallback(
+    async (url: string) => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const summary = await invoke<RepositorySummary>(
+          "clone_repository_from_url",
+          { url },
+        );
+        await loadRepositoryData(summary);
+      } catch (cloneError) {
+        setRepository(null);
+        setRepositoryData(null);
+        setError(toRepositoryError(cloneError));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [loadRepositoryData],
   );
 
   const openRepositoryPicker = useCallback(async () => {
@@ -160,6 +189,7 @@ export function useRepositoryStore() {
       error,
       isLoading,
       openRepositoryPicker,
+      cloneRepositoryFromUrl,
       validateRepositoryPath,
       removeRecentRepository,
     }),
@@ -170,6 +200,7 @@ export function useRepositoryStore() {
       error,
       isLoading,
       openRepositoryPicker,
+      cloneRepositoryFromUrl,
       validateRepositoryPath,
       removeRecentRepository,
     ],

@@ -793,6 +793,38 @@ Acceptance Criteria:
 
 ---
 
+## Phase 10: Public GitHub URL Support
+
+### TASK-1001: Clone and visualize public GitHub repository URL
+
+Status: Done
+
+Description:
+Allow users to enter a public GitHub HTTPS repository URL, clone it into the app-managed cache, and visualize the cached local clone through the existing graph flow.
+
+Acceptance Criteria:
+
+- User can enter `https://github.com/{owner}/{repo}` or `.git` URL.
+- Non-GitHub, credentialed, query, fragment, nested, empty, and unsafe URLs are rejected.
+- Public repository clone uses `git2`, not Git CLI or shell execution.
+- Clone target is under the Tauri app data directory.
+- Existing cached clones are opened without fetch or pull.
+- Private repositories, tokens, SSH, refresh, and submodules are not supported.
+- Successful clone loads repository metadata and graph through the existing read-only path.
+- Documentation records the network-scope change.
+
+Checks:
+
+- `cargo fmt --check`
+- `cargo check`
+- `cargo clippy -- -D warnings`
+- `cargo test`
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test`
+
+---
+
 ## Completion Definition
 
 A task is complete when:

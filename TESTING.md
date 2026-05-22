@@ -151,6 +151,8 @@ Important flows:
 ```txt
 Open valid repository
 Open invalid folder
+Open public GitHub URL
+Reject invalid GitHub URL
 Open empty repository
 Load graph
 Select commit
@@ -343,6 +345,9 @@ Test these cases:
 - repository is corrupted
 - branch points to missing object
 - tag points to missing object
+- invalid GitHub URL
+- private GitHub repository URL
+- cached GitHub clone exists
 - path contains spaces
 - path contains Unicode characters
 

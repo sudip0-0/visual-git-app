@@ -2,17 +2,17 @@
 
 ## Current Project Status
 
-Git data engine, graph engine, graph UI, client-side search/filter interactions, commit changed-file inspection, on-demand diff viewing, branch comparison, and Git internals mode are implemented.
+Git data engine, graph engine, graph UI, client-side search/filter interactions, commit changed-file inspection, on-demand diff viewing, branch comparison, Git internals mode, and public GitHub URL clone support are implemented.
 
-The app can open a native folder picker, validate a selected local Git repository in Rust, load read-only repository metadata through a `GitProvider` abstraction, list local and remote branches, list tags, load recent commits with parent hashes and merge detection, build graph-ready commit data with lanes, edges, refs, and HEAD markers, render a scrollable SVG commit graph with selectable commits plus pan and zoom controls, search commits, highlight branch reachability, select tagged commits, show changed files for a selected commit, load file diffs only when requested, safely handle truncated and binary diffs, compare branches with ahead/behind counts plus merge base, explain HEAD/ref resolution, show raw selected commit metadata, and demonstrate a separate read-only loose commit object parser. Rust and frontend checks pass.
+The app can open a native folder picker, clone a public GitHub HTTPS repository into an app-managed cache, validate a selected local Git repository in Rust, load read-only repository metadata through a `GitProvider` abstraction, list local and remote branches, list tags, load recent commits with parent hashes and merge detection, build graph-ready commit data with lanes, edges, refs, and HEAD markers, render a scrollable SVG commit graph with selectable commits plus pan and zoom controls, search commits, highlight branch reachability, select tagged commits, show changed files for a selected commit, load file diffs only when requested, safely handle truncated and binary diffs, compare branches with ahead/behind counts plus merge base, explain HEAD/ref resolution, show raw selected commit metadata, and demonstrate a separate read-only loose commit object parser. Rust and frontend checks pass.
 
 ## Current Phase
 
-Phase 9: Performance, Polish, and Packaging
+Phase 10: Public GitHub URL Support
 
 ## Current Focus
 
-MVP portfolio release preparation complete; ready for screenshot capture and manual installer smoke testing.
+Public GitHub URL clone support complete; ready for manual live-clone smoke testing and screenshot capture.
 
 ## Completed
 
@@ -36,9 +36,68 @@ None.
 
 ## Next Recommended Task
 
-Define the next scoped phase before adding more Git internals features.
+Run a manual smoke test with a small public GitHub repository from the packaged app.
 
 ## 2026-05-22
+
+### TASK-1001: Clone and visualize public GitHub repository URL
+
+Status: Done
+
+Summary:
+
+- Added public GitHub HTTPS URL cloning through a new thin Tauri command.
+- Implemented strict URL validation for `https://github.com/{owner}/{repo}` with optional `.git`.
+- Cloned public repositories into the Tauri app data cache and reused existing cached clones without fetch or pull.
+- Reused the existing local repository metadata and graph-loading flow after clone/cache open.
+- Added a top-bar GitHub URL form with loading-safe submit behavior.
+- Documented the post-MVP network-scope change, public-only limitation, cache behavior, and unsupported auth/refresh/submodule behavior.
+
+Files changed:
+
+- `README.md`
+- `PRODUCT.md`
+- `SECURITY.md`
+- `DECISIONS.md`
+- `TASKS.md`
+- `TESTING.md`
+- `src-tauri/Cargo.toml`
+- `src-tauri/Cargo.lock`
+- `src-tauri/src/app/repository_service.rs`
+- `src-tauri/src/commands/repository_commands.rs`
+- `src-tauri/src/git/github_clone.rs`
+- `src-tauri/src/git/mod.rs`
+- `src-tauri/src/lib.rs`
+- `src/components/layout/AppShell.tsx`
+- `src/components/layout/TopBar.tsx`
+- `src/components/repository/GithubRepositoryForm.tsx`
+- `src/stores/repositoryStore.ts`
+- `src/utils/githubUrl.ts`
+- `src/utils/githubUrl.test.ts`
+
+Tests run:
+
+- `cargo fmt`
+- `cargo fmt --check`
+- `cargo check`
+- `cargo clippy -- -D warnings`
+- `cargo test`
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test`
+
+Result:
+
+- Passed.
+
+Risks:
+
+- Live public GitHub clone was not manually smoke-tested in the desktop UI during this automated run.
+- Cached public clones are intentionally not refreshed; users must remove the cached clone outside the app to force a fresh clone in this version.
+
+Next recommended task:
+
+- Manually test the GitHub URL form with a small public repository and capture updated portfolio screenshots.
 
 ### Fixed graph-only scrolling layout
 

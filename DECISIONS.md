@@ -341,3 +341,35 @@ Consequences:
 - Git internals mode can teach HEAD, refs, object paths, and commit structure now.
 - Future parser work can add packfiles, trees, and blobs without replacing the `git2` provider.
 - The MVP remains read-only and avoids Git CLI calls.
+
+---
+
+## ADR-0011: Support public GitHub URL clones in app cache
+
+Date: 2026-05-22
+
+Status: Accepted
+
+Context:
+
+The original MVP was offline and local-only. A post-MVP feature should let users paste a GitHub repository link and visualize its history without turning the app into a full Git client or adding account integration.
+
+Decision:
+
+Support public `https://github.com/owner/repo` URLs only. Clone the repository with `git2` into an app-managed cache directory, then open the cached local clone through the existing read-only repository and graph flow.
+
+Reason:
+
+This gives users a convenient way to visualize public repositories while preserving the existing command/service boundaries and avoiding Git CLI shell execution.
+
+Tradeoffs:
+
+- The feature introduces network access outside the original offline MVP.
+- Private repositories, tokens, SSH, refresh, fetch, pull, and submodules remain unsupported.
+- Cached clones can become stale because the first version intentionally does not update them.
+
+Consequences:
+
+- Security documentation must distinguish local repository opening from opt-in public GitHub cloning.
+- URL validation must stay strict before any clone starts.
+- Clone output must remain inside the app-managed cache.

@@ -2,7 +2,7 @@
 
 ## Security Goal
 
-The app must safely inspect local Git repositories without modifying them, leaking data, or executing untrusted code.
+The app must safely inspect Git repositories without modifying them, leaking data, or executing untrusted code.
 
 ## MVP Security Position
 
@@ -16,6 +16,8 @@ No network sync
 No Git write operations
 No execution of repository files
 ```
+
+Post-MVP public GitHub URL support is an explicit opt-in exception to the offline rule. It may clone a public `https://github.com/owner/repo` repository into the app-managed cache, then reads that cached local clone with the existing read-only graph flow.
 
 ## Core Rules
 
@@ -95,9 +97,9 @@ Rules:
 - handle permission errors
 - do not expose unrestricted filesystem browsing beyond user-selected paths
 
-### 5. No Network Calls in MVP
+### 5. Network Boundaries
 
-The MVP should not send data anywhere.
+The original MVP should not send data anywhere.
 
 Forbidden in MVP:
 
@@ -109,7 +111,21 @@ Forbidden in MVP:
 - remote sync
 - cloud backups
 
-If network features are added later:
+Allowed after the public GitHub URL feature:
+
+- clone a user-entered public GitHub HTTPS repository into the app data cache
+- reuse an existing cached clone without fetching
+
+Still forbidden:
+
+- GitHub API calls
+- GitHub login
+- private repository authentication
+- SSH repository access
+- fetch, pull, push, or background refresh
+- submodule initialization
+
+If additional network features are added later:
 
 - user must opt in
 - document what data is sent
@@ -296,7 +312,8 @@ Private repository data may leak through logs, telemetry, or error reports.
 
 Mitigation:
 
-- no network calls in MVP
+- no network calls in the local repository opening flow
+- public GitHub URL clone is opt-in and stores data locally
 - safe logging
 - no telemetry
 - local-only storage
@@ -330,7 +347,8 @@ Before MVP release:
 ```md
 - [ ] No Git write operation exists
 - [ ] No shell execution command exists
-- [ ] No network calls exist
+- [ ] No network calls exist for local repository opening
+- [ ] Public GitHub URL clone is opt-in and public-only
 - [ ] No repository files are executed
 - [ ] Commit messages render as text
 - [ ] Errors are safe
