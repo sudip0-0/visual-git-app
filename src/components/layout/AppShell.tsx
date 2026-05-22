@@ -17,6 +17,17 @@ export function AppShell() {
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const isLoading = repositoryStore.isLoading || graphStore.isLoading;
   const error = repositoryStore.error ?? graphStore.error;
+  const repositoryPath = repositoryStore.repository?.path;
+  const currentBranch = repositoryStore.repository?.currentBranch;
+  const selectedCommitHash = graphStore.selectedCommit?.id;
+  const clearCommitDetails = commitDetailsStore.clear;
+  const loadBranchComparison = commitDetailsStore.loadBranchComparison;
+  const loadChangedFiles = commitDetailsStore.loadChangedFiles;
+  const loadGitInternals = commitDetailsStore.loadGitInternals;
+  const clearGraph = graphStore.clearGraph;
+  const loadCommitGraph = graphStore.loadCommitGraph;
+  const openRepositoryPicker = repositoryStore.openRepositoryPicker;
+  const resetGraphView = uiStore.resetGraphView;
   const branchOptions = useMemo(() => {
     const branchNames = repositoryStore.repositoryData?.branches.map(
       (branch) => branch.name,
@@ -26,12 +37,16 @@ export function AppShell() {
   }, [repositoryStore.repositoryData?.branches]);
 
   useEffect(() => {
-    const path = repositoryStore.repository?.path ?? null;
+    const path = repositoryPath ?? null;
 
     if (!path) {
+      if (loadedGraphPath.current === null) {
+        return;
+      }
+
       loadedGraphPath.current = null;
-      graphStore.clearGraph();
-      commitDetailsStore.clear();
+      clearGraph();
+      clearCommitDetails();
       return;
     }
 
@@ -40,56 +55,50 @@ export function AppShell() {
     }
 
     loadedGraphPath.current = path;
-    void graphStore.loadCommitGraph(path, 500).catch(() => {
+    void loadCommitGraph(path, 500).catch(() => {
       // The graph store keeps the user-safe error for the viewport.
     });
-  }, [commitDetailsStore, graphStore, repositoryStore.repository?.path]);
+  }, [
+    clearCommitDetails,
+    clearGraph,
+    loadCommitGraph,
+    repositoryPath,
+  ]);
 
   useEffect(() => {
-    const path = repositoryStore.repository?.path;
-    const commitHash = graphStore.selectedCommit?.id;
+    const path = repositoryPath;
+    const commitHash = selectedCommitHash;
 
     if (!path || !commitHash) {
       return;
     }
 
-    void commitDetailsStore.loadChangedFiles(path, commitHash).catch(() => {
+    void loadChangedFiles(path, commitHash).catch(() => {
       // Commit details store keeps user-safe error state.
     });
-  }, [
-    commitDetailsStore,
-    graphStore.selectedCommit?.id,
-    repositoryStore.repository?.path,
-  ]);
+  }, [loadChangedFiles, repositoryPath, selectedCommitHash]);
 
   useEffect(() => {
-    const path = repositoryStore.repository?.path;
+    const path = repositoryPath;
 
     if (!path) {
       return;
     }
 
-    void commitDetailsStore
-      .loadGitInternals(path, graphStore.selectedCommit?.id ?? null)
-      .catch(() => {
-        // Commit details store keeps user-safe error state.
-      });
-  }, [
-    commitDetailsStore,
-    graphStore.selectedCommit?.id,
-    repositoryStore.repository?.path,
-  ]);
+    void loadGitInternals(path, selectedCommitHash ?? null).catch(() => {
+      // Commit details store keeps user-safe error state.
+    });
+  }, [loadGitInternals, repositoryPath, selectedCommitHash]);
 
   useEffect(() => {
-    const path = repositoryStore.repository?.path;
+    const path = repositoryPath;
     if (!path || branchOptions.length < 2) {
       return;
     }
 
     const baseBranch =
-      repositoryStore.repository?.currentBranch &&
-      branchOptions.includes(repositoryStore.repository.currentBranch)
-        ? repositoryStore.repository.currentBranch
+      currentBranch && branchOptions.includes(currentBranch)
+        ? currentBranch
         : branchOptions[0];
     const targetBranch = branchOptions.find((branch) => branch !== baseBranch);
 
@@ -97,16 +106,14 @@ export function AppShell() {
       return;
     }
 
-    void commitDetailsStore
-      .loadBranchComparison(path, baseBranch, targetBranch)
-      .catch(() => {
-        // Commit details store keeps user-safe error state.
-      });
+    void loadBranchComparison(path, baseBranch, targetBranch).catch(() => {
+      // Commit details store keeps user-safe error state.
+    });
   }, [
     branchOptions,
-    commitDetailsStore,
-    repositoryStore.repository?.currentBranch,
-    repositoryStore.repository?.path,
+    currentBranch,
+    loadBranchComparison,
+    repositoryPath,
   ]);
 
   useEffect(() => {
@@ -120,7 +127,7 @@ export function AppShell() {
 
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "o") {
         event.preventDefault();
-        void repositoryStore.openRepositoryPicker();
+        void openRepositoryPicker();
         return;
       }
 
@@ -132,13 +139,13 @@ export function AppShell() {
 
       if (!isTyping && event.key === "0") {
         event.preventDefault();
-        uiStore.resetGraphView();
+        resetGraphView();
       }
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [repositoryStore, uiStore]);
+  }, [openRepositoryPicker, resetGraphView]);
 
   return (
     <div className="flex min-h-screen flex-col bg-[#090b10] text-slate-100">

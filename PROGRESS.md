@@ -40,6 +40,51 @@ Define the next scoped phase before adding more Git internals features.
 
 ## 2026-05-22
 
+### Phase 9 quality check
+
+Status: Done
+
+Summary:
+
+- Verified the app launches through `npm run tauri:dev`.
+- Found and fixed a startup React effect loop that logged "Maximum update depth exceeded" when no repository was open.
+- Verified the fix by relaunching Tauri dev and observing a clean startup window.
+- Verified frontend checks, Rust checks, and packaging after the fix.
+- Verified repository validation, empty repository handling, commit graph loading, search, branch filtering, commit details, diff handling, branch comparison, and Git internals are covered by current source paths and automated tests where available.
+- Verified release docs include README setup/features/limitations/roadmap and `RELEASE_CHECKLIST.md`.
+- Verified no production checkout, merge, rebase, pull, push, fetch, shell execution, unsafe HTML rendering, app network call, or repository file execution path exists.
+
+Files changed:
+
+- `src/components/layout/AppShell.tsx`
+- `PROGRESS.md`
+
+Tests run:
+
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test`
+- `cargo fmt --check`
+- `cargo check`
+- `cargo clippy`
+- `cargo test`
+- `npm run tauri:dev`
+- `npm run tauri build`
+- Source safety scan for Git write operations, shell execution, repository file execution, unsafe HTML rendering, console logging, and app network calls
+
+Result:
+
+- Passed.
+
+Risks:
+
+- Valid/invalid/empty repository UI flows are supported by service tests and source inspection, but the native folder picker flow was not manually driven in the desktop window during this automated check.
+- Portfolio screenshots are still placeholders in `README.md` and should be captured before publishing.
+
+Next recommended task:
+
+- Capture the three README screenshots from a representative repository and mark the relevant `RELEASE_CHECKLIST.md` items.
+
 ### TASK-0901 to TASK-0903: Performance, polish, and packaging
 
 Status: Done
