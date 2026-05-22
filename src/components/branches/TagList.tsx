@@ -17,13 +17,16 @@ export function TagList({ tags, onSelectTag }: TagListProps) {
           {tags.map((tag) => (
             <li key={tag.name}>
               <button
-                className="w-full truncate rounded border border-transparent p-1.5 text-left hover:border-slate-800 hover:bg-slate-900/50"
+                className="flex w-full items-center gap-2 rounded border border-transparent p-1.5 text-left hover:border-slate-800 hover:bg-slate-900/50 disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={!tag.target}
                 onClick={() => onSelectTag(tag)}
                 title={tag.target ?? "Tag target unavailable"}
                 type="button"
               >
-                {tag.name}
+                <span className="shrink-0 rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-200">
+                  tag
+                </span>
+                <span className="truncate">{tag.name}</span>
               </button>
             </li>
           ))}

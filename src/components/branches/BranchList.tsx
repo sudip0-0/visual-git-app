@@ -41,10 +41,8 @@ export function BranchList({
               onClick={() => onSelectBranch(branch.name)}
               type="button"
             >
-              <span className="truncate">
-                {branch.name}
-              </span>
-              <span className="shrink-0 text-slate-500">
+              <span className="truncate text-slate-200">{branch.name}</span>
+              <span className={branchBadgeClass(branch)}>
                 {branch.isCurrent ? "current" : branch.isRemote ? "remote" : "local"}
               </span>
             </button>
@@ -53,4 +51,16 @@ export function BranchList({
       </ul>
     </div>
   );
+}
+
+function branchBadgeClass(branch: BranchInfo) {
+  if (branch.isCurrent) {
+    return "shrink-0 rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-200";
+  }
+
+  if (branch.isRemote) {
+    return "shrink-0 rounded border border-sky-500/30 bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-medium text-sky-200";
+  }
+
+  return "shrink-0 rounded border border-slate-700 bg-slate-800/80 px-1.5 py-0.5 text-[10px] font-medium text-slate-300";
 }

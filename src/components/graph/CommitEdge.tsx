@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type {
   GraphCommitNode,
   GraphEdge as GraphEdgeType,
@@ -9,7 +10,7 @@ type CommitEdgeProps = {
   to: GraphCommitNode;
 };
 
-export function CommitEdge({ edge, from, to }: CommitEdgeProps) {
+export const CommitEdge = memo(function CommitEdge({ edge, from, to }: CommitEdgeProps) {
   const midY = from.y + (to.y - from.y) / 2;
   const isMerge = edge.edgeType === "merge";
   const path =
@@ -27,4 +28,4 @@ export function CommitEdge({ edge, from, to }: CommitEdgeProps) {
       strokeWidth={isMerge ? 2.25 : 1.75}
     />
   );
-}
+});

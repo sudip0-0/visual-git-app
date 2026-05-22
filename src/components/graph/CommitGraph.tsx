@@ -1,3 +1,4 @@
+import { memo, useMemo } from "react";
 import type { CommitGraphResponse } from "../../types/graph";
 import { CommitEdge } from "./CommitEdge";
 import { CommitNode } from "./CommitNode";
@@ -10,21 +11,24 @@ type CommitGraphProps = {
   onSelectCommit: (commitId: string) => void;
 };
 
-export function CommitGraph({
+export const CommitGraph = memo(function CommitGraph({
   graph,
   selectedCommitId,
   matchingCommitIds,
   visibleCommitIds,
   onSelectCommit,
 }: CommitGraphProps) {
-  const nodesById = new Map(graph.commits.map((commit) => [commit.id, commit]));
-  const width = Math.max(
-    720,
-    ...graph.commits.map((commit) => commit.x + 420),
+  const nodesById = useMemo(
+    () => new Map(graph.commits.map((commit) => [commit.id, commit])),
+    [graph.commits],
   );
-  const height = Math.max(
-    480,
-    ...graph.commits.map((commit) => commit.y + 64),
+  const width = useMemo(
+    () => Math.max(720, ...graph.commits.map((commit) => commit.x + 420)),
+    [graph.commits],
+  );
+  const height = useMemo(
+    () => Math.max(480, ...graph.commits.map((commit) => commit.y + 64)),
+    [graph.commits],
   );
 
   return (
@@ -69,4 +73,4 @@ export function CommitGraph({
       </g>
     </svg>
   );
-}
+});

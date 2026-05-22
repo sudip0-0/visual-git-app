@@ -1,6 +1,9 @@
+import type { Ref } from "react";
+
 type CommitSearchProps = {
   query: string;
   resultCount: number;
+  inputRef?: Ref<HTMLInputElement>;
   onClearSearch: () => void;
   onSearchChange: (query: string) => void;
 };
@@ -8,6 +11,7 @@ type CommitSearchProps = {
 export function CommitSearch({
   query,
   resultCount,
+  inputRef,
   onClearSearch,
   onSearchChange,
 }: CommitSearchProps) {
@@ -29,6 +33,7 @@ export function CommitSearch({
       </div>
       <input
         className="w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-200 outline-none placeholder:text-slate-600 focus:border-cyan-700"
+        ref={inputRef}
         onChange={(event) => onSearchChange(event.target.value)}
         placeholder="Hash, message, author"
         type="search"

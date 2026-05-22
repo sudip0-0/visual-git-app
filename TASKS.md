@@ -741,6 +741,58 @@ Acceptance Criteria:
 
 ---
 
+## Phase 9: Performance, Polish, and Packaging
+
+### TASK-0901: Performance safeguards
+
+Status: Done
+
+Description:
+Keep graph loading bounded for MVP release and avoid unnecessary frontend rendering work.
+
+Acceptance Criteria:
+
+- Default graph load remains 500 commits.
+- Graph loading has a safe upper limit.
+- User can load more commits without changing Git state.
+- Large graph states are explained in the UI.
+- Graph rendering avoids avoidable recomputation where practical.
+
+---
+
+### TASK-0902: Release polish
+
+Status: Done
+
+Description:
+Improve loading, error, empty, selected, branch, and tag presentation for portfolio release readiness.
+
+Acceptance Criteria:
+
+- Loading state communicates progress.
+- Error state shows a safe typed error code when available.
+- Empty repository state is explicit.
+- Branch and tag badges are visually distinct.
+- Useful keyboard shortcuts are available where practical.
+
+---
+
+### TASK-0903: Release documentation and packaging check
+
+Status: Done
+
+Description:
+Update release-facing documentation and verify packaging if practical.
+
+Acceptance Criteria:
+
+- README includes screenshot placeholders.
+- README includes setup, commands, features, limitations, and roadmap.
+- Release checklist exists.
+- Packaging command is tested if practical.
+
+---
+
 ## Completion Definition
 
 A task is complete when:

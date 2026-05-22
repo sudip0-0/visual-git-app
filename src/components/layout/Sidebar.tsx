@@ -3,6 +3,7 @@ import { TagList } from "../branches/TagList";
 import { RecentRepositories } from "../repository/RecentRepositories";
 import { CommitSearch } from "../search/CommitSearch";
 import { SearchResults } from "../search/SearchResults";
+import type { Ref } from "react";
 import type { RepositoryData } from "../../types/git";
 import type { GraphCommitNode } from "../../types/graph";
 import type {
@@ -19,6 +20,7 @@ type SidebarProps = {
   searchQuery: string;
   selectedBranchName: string | null;
   selectedCommitId: string | null;
+  searchInputRef?: Ref<HTMLInputElement>;
   onClearBranchFilter: () => void;
   onClearSearch: () => void;
   onOpenRecentRepository: (path: string) => void;
@@ -38,6 +40,7 @@ export function Sidebar({
   searchQuery,
   selectedBranchName,
   selectedCommitId,
+  searchInputRef,
   onClearBranchFilter,
   onClearSearch,
   onOpenRecentRepository,
@@ -95,6 +98,7 @@ export function Sidebar({
       {repositoryData ? (
         <section className="mt-6">
           <CommitSearch
+            inputRef={searchInputRef}
             onClearSearch={onClearSearch}
             onSearchChange={onSearchChange}
             query={searchQuery}

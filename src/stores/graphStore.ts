@@ -4,6 +4,10 @@ import type { CommitGraphResponse, GraphCommitNode } from "../types/graph";
 import type { RepositoryError } from "../types/repository";
 import { searchCommits } from "../utils/graphSearch";
 
+const defaultCommitLimit = 500;
+const maxCommitLimit = 2_000;
+const commitLimitStep = 500;
+
 function toGraphError(error: unknown): RepositoryError {
   if (
     typeof error === "object" &&
@@ -34,21 +38,33 @@ export function useGraphStore() {
   );
   const [error, setError] = useState<RepositoryError | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [commitLimit, setCommitLimit] = useState(defaultCommitLimit);
 
   const loadCommitGraph = useCallback(async (path: string, limit?: number) => {
+    const requestedLimit = limit ?? defaultCommitLimit;
     setIsLoading(true);
     setError(null);
 
     try {
       const nextGraph = await invoke<CommitGraphResponse>("load_commit_graph", {
         path,
-        limit,
+        limit: requestedLimit,
       });
 
       setGraph(nextGraph);
-      setSelectedCommitId(nextGraph.commits[0]?.id ?? null);
+      setSelectedCommitId((currentSelectedCommitId) => {
+        if (
+          currentSelectedCommitId &&
+          nextGraph.commits.some((commit) => commit.id === currentSelectedCommitId)
+        ) {
+          return currentSelectedCommitId;
+        }
+
+        return nextGraph.commits[0]?.id ?? null;
+      });
       setSearchQuery("");
       setSelectedBranchName(null);
+      setCommitLimit(requestedLimit);
       return nextGraph;
     } catch (graphError) {
       const nextError = toGraphError(graphError);
@@ -64,6 +80,19 @@ export function useGraphStore() {
     }
   }, []);
 
+  const loadMoreCommitGraph = useCallback(
+    async (path: string) => {
+      const nextLimit = Math.min(maxCommitLimit, commitLimit + commitLimitStep);
+
+      if (nextLimit === commitLimit) {
+        return graph;
+      }
+
+      return loadCommitGraph(path, nextLimit);
+    },
+    [commitLimit, graph, loadCommitGraph],
+  );
+
   const selectCommit = useCallback((commitId: string) => {
     setSelectedCommitId(commitId);
   }, []);
@@ -75,6 +104,7 @@ export function useGraphStore() {
     setSelectedBranchName(null);
     setError(null);
     setIsLoading(false);
+    setCommitLimit(defaultCommitLimit);
   }, []);
 
   const setSearch = useCallback((value: string) => {
@@ -152,9 +182,14 @@ export function useGraphStore() {
     () => new Set(matchingCommits.map((commit) => commit.id)),
     [matchingCommits],
   );
+  const canLoadMore = graph
+    ? graph.commits.length >= commitLimit && commitLimit < maxCommitLimit
+    : false;
 
   return useMemo(
     () => ({
+      canLoadMore,
+      commitLimit,
       graph,
       selectedCommit,
       selectedCommitId,
@@ -168,6 +203,7 @@ export function useGraphStore() {
       isLoading,
       clearGraph,
       clearSearch,
+      loadMoreCommitGraph,
       loadCommitGraph,
       setBranchFilter,
       setSearch,
@@ -176,12 +212,15 @@ export function useGraphStore() {
     [
       clearGraph,
       clearSearch,
+      canLoadMore,
+      commitLimit,
       error,
       graph,
       isLoading,
       matchingCommits,
       matchingCommitIds,
       loadCommitGraph,
+      loadMoreCommitGraph,
       searchQuery,
       selectCommit,
       selectedCommit,

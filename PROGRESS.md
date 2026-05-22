@@ -8,11 +8,11 @@ The app can open a native folder picker, validate a selected local Git repositor
 
 ## Current Phase
 
-Phase 8: Git Internals Mode
+Phase 9: Performance, Polish, and Packaging
 
 ## Current Focus
 
-Ready for Phase 9 planning.
+MVP portfolio release preparation complete; ready for screenshot capture and manual installer smoke testing.
 
 ## Completed
 
@@ -39,6 +39,68 @@ None.
 Define the next scoped phase before adding more Git internals features.
 
 ## 2026-05-22
+
+### TASK-0901 to TASK-0903: Performance, polish, and packaging
+
+Status: Done
+
+Summary:
+
+- Kept the default graph load at 500 commits and added bounded "Load more" support up to a safe MVP cap.
+- Improved graph loading, empty, error, and large-graph states.
+- Reduced avoidable graph rendering recomputation with memoized graph components and derived graph sizing.
+- Added keyboard shortcuts for opening a repository, focusing search, and resetting the graph view.
+- Improved visual polish for branch and tag badges while keeping the dark desktop layout.
+- Updated `README.md` with screenshot placeholders, setup commands, feature scope, limitations, roadmap, architecture notes, and performance notes.
+- Added `RELEASE_CHECKLIST.md` for portfolio release validation.
+- Verified packaging produced both Windows MSI and NSIS installer bundles.
+- Confirmed no checkout, merge, rebase, pull, push, fetch, shell execution, or Git write feature was added.
+
+Files changed:
+
+- `README.md`
+- `RELEASE_CHECKLIST.md`
+- `TASKS.md`
+- `PROGRESS.md`
+- `src-tauri/src/app/graph_service.rs`
+- `src/components/branches/BranchList.tsx`
+- `src/components/branches/TagList.tsx`
+- `src/components/graph/CommitEdge.tsx`
+- `src/components/graph/CommitGraph.tsx`
+- `src/components/graph/CommitNode.tsx`
+- `src/components/graph/GraphViewport.tsx`
+- `src/components/layout/AppShell.tsx`
+- `src/components/layout/GraphArea.tsx`
+- `src/components/layout/Sidebar.tsx`
+- `src/components/search/CommitSearch.tsx`
+- `src/stores/graphStore.ts`
+
+Tests run:
+
+- `cargo fmt --check`
+- `cargo check`
+- `cargo clippy -- -D warnings`
+- `cargo test`
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test`
+- `npm run tauri build`
+- Local Vite HTTP smoke check at `http://127.0.0.1:1420/`
+- Source safety scan for Git write operations, shell execution, repository script execution, unsafe HTML rendering, and console logging
+
+Result:
+
+- Passed.
+
+Risks:
+
+- The "Load more" control is limit-based and may appear once for a repository with exactly 500 commits before disappearing after the next request.
+- The graph remains SVG-based; very large histories beyond the MVP cap still need virtualization or a canvas/WebGL renderer later.
+- Browser visual automation could not start in this sandboxed Windows session, so runtime UI verification used the local HTTP response plus build/package checks.
+
+Next recommended task:
+
+- Capture portfolio screenshots and run a manual smoke test from the packaged installer.
 
 ### Phase 8 quality check
 

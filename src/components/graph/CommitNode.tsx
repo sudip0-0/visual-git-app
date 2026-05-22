@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { GraphCommitNode as GraphCommitNodeType } from "../../types/graph";
 
 type CommitNodeProps = {
@@ -8,7 +9,7 @@ type CommitNodeProps = {
   onSelectCommit: (commitId: string) => void;
 };
 
-export function CommitNode({
+export const CommitNode = memo(function CommitNode({
   commit,
   isDimmed,
   isSearchMatch,
@@ -81,4 +82,4 @@ export function CommitNode({
       ) : null}
     </g>
   );
-}
+});

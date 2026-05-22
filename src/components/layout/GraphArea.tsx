@@ -15,6 +15,9 @@ type GraphAreaProps = {
   visibleCommitIds: Set<string>;
   pan: { x: number; y: number };
   zoom: number;
+  canLoadMore: boolean;
+  commitLimit: number;
+  onLoadMore: () => void;
   onOpenRepository: () => void;
   onPan: (deltaX: number, deltaY: number) => void;
   onResetView: () => void;
@@ -33,6 +36,9 @@ export function GraphArea({
   visibleCommitIds,
   pan,
   zoom,
+  canLoadMore,
+  commitLimit,
+  onLoadMore,
   onOpenRepository,
   onPan,
   onResetView,
@@ -46,6 +52,9 @@ export function GraphArea({
       graph={graph}
       isLoading={isLoading}
       matchingCommitIds={matchingCommitIds}
+      canLoadMore={canLoadMore}
+      commitLimit={commitLimit}
+      onLoadMore={onLoadMore}
       onOpenRepository={onOpenRepository}
       onPan={onPan}
       onResetView={onResetView}

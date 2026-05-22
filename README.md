@@ -1,147 +1,39 @@
 # Visual Git Commit Graph Desktop
 
-A desktop application for visualizing local Git repository history as an interactive commit graph.
+A read-only desktop app for exploring local Git history as an interactive graph.
 
-The app opens a local Git repository, reads commit history, branches, tags, and HEAD information, then renders an interactive branch tree and commit visualizer. The first version is read-only. Later versions can add diff viewing, commit comparison, Git internals exploration, and custom `.git` parsing.
+The app opens a local repository, reads commit history with Rust and `git2`, and renders branches, tags, merges, diffs, branch comparison, and Git internals in a Tauri + React interface. It is built as a visual learning tool, not a Git client.
 
-## Project Status
+## Screenshots
 
-Current phase: project foundation.
+Screenshots are planned for the portfolio release:
 
-The project has a Tauri 2 + React + TypeScript + Tailwind CSS foundation with a placeholder desktop shell. Git repository loading and graph data are not implemented yet.
+- `docs/screenshots/main-graph.png` - main graph view
+- `docs/screenshots/commit-details.png` - commit details and diff viewer
+- `docs/screenshots/git-internals.png` - HEAD, refs, and commit object view
 
-## Recommended Tech Stack
+## Features
 
-| Layer | Technology |
-|---|---|
-| Desktop shell | Tauri 2 |
-| Backend | Rust |
-| Git engine | `git2` crate first, custom parser later |
-| Frontend | React + TypeScript |
-| Styling | Tailwind CSS |
-| State management | Zustand or TanStack Store |
-| Graph rendering | SVG for MVP, Canvas/WebGL later |
-| File watching | Later phase; likely Rust `notify` crate |
-| Testing | Rust tests, Vitest, React Testing Library, Playwright later |
+- Open a local Git repository with the native folder picker.
+- Validate repository paths with safe Rust errors.
+- Remember recent repositories locally.
+- Load 500 recent commits by default.
+- Render an SVG commit graph with parent and merge edges.
+- Select commits and inspect commit metadata.
+- Search by hash, message, or author.
+- Highlight commits reachable from a selected branch.
+- Show local branches, remote branches, tags, and HEAD.
+- Show changed files and load file diffs only on request.
+- Truncate large diffs and handle binary files safely.
+- Compare branches with ahead, behind, and merge base data.
+- Explain HEAD, refs, object paths, and commit structure in Git Internals mode.
+- Demonstrate a separate educational loose commit object parser.
 
-## Product Goal
+## Keyboard Shortcuts
 
-Build a desktop app that helps developers understand Git history visually.
-
-The app should show:
-
-- commit history
-- branch relationships
-- merge commits
-- tags
-- current HEAD
-- local and remote branches
-- commit details
-- branch divergence in a later phase
-- Git internals explanations in later phases
-
-## MVP Scope
-
-The MVP is a read-only Git visualizer.
-
-MVP includes:
-
-- Open a local folder
-- Validate whether it is a Git repository
-- Read current branch and HEAD
-- List local branches
-- List remote branches
-- List tags
-- Load recent commits
-- Build commit-parent relationships
-- Render a basic commit graph
-- Click commit to view details
-- Search commits by hash, message, or author
-- Filter by branch
-- Remember recent repositories
-
-MVP excludes:
-
-- commit creation
-- push
-- pull
-- merge
-- rebase
-- reset
-- stash management
-- conflict resolution
-- GitHub/GitLab login
-- cloud sync
-
-## Why This Project Is Advanced
-
-This project includes:
-
-- Rust systems programming
-- Git object and reference modeling
-- graph data structures
-- graph layout algorithms
-- desktop app development
-- local filesystem access
-- large-data rendering challenges
-- performance optimization
-- developer-focused UX
-
-## Suggested Folder Structure
-
-```txt
-visual-git-commit-graph/
-  README.md
-  PRODUCT.md
-  ARCHITECTURE.md
-  TASKS.md
-  PROGRESS.md
-  DECISIONS.md
-  TESTING.md
-  SECURITY.md
-  PROMPTS.md
-  AGENTS.md
-
-  src-tauri/
-    src/
-      main.rs
-      commands/
-      git/
-      models/
-      errors.rs
-
-  src/
-    app/
-    components/
-    stores/
-    types/
-    utils/
-```
-
-## Development Workflow
-
-1. Read `PRODUCT.md`.
-2. Read `ARCHITECTURE.md`.
-3. Pick one task from `TASKS.md`.
-4. Implement one small task only.
-5. Run tests.
-6. Update `PROGRESS.md`.
-7. Update `DECISIONS.md` if architecture changed.
-8. Commit the change.
-
-## Agentic Coding Workflow
-
-Use agents in roles:
-
-| Role | Best Use |
-|---|---|
-| Planner | Convert product goals into tasks |
-| Builder | Implement one task |
-| Reviewer | Inspect changes without editing |
-| Tester | Add tests and find regressions |
-| Documenter | Update docs after changes |
-
-Do not let multiple agents edit the same area at the same time.
+- `Ctrl`/`Cmd` + `O`: open repository
+- `/`: focus commit search
+- `0`: reset graph view
 
 ## Local Setup
 
@@ -157,24 +49,26 @@ Install dependencies:
 npm install
 ```
 
-Run the frontend dev server:
+Run the desktop app:
+
+```bash
+npm run tauri:dev
+```
+
+Run the frontend dev server only:
 
 ```bash
 npm run dev
 ```
 
-Run the desktop app:
-
-```bash
-npm run tauri dev
-```
+## Commands
 
 Frontend checks:
 
 ```bash
-npm run test
-npm run lint
 npm run typecheck
+npm run lint
+npm run test
 ```
 
 Rust checks:
@@ -183,35 +77,71 @@ Rust checks:
 cd src-tauri
 cargo fmt --check
 cargo check
-cargo clippy
+cargo clippy -- -D warnings
 cargo test
 ```
 
-## Build Strategy
+Package the app:
 
-Start with a working read-only app.
+```bash
+npm run tauri build
+```
 
-Recommended order:
+## Read-Only Scope
 
-1. Create Tauri app
-2. Add repo opener
-3. Validate Git repository
-4. Read HEAD/current branch
-5. Read branches and tags
-6. Load recent commits
-7. Show commit list
-8. Render basic graph
-9. Add commit detail panel
-10. Add search and filter
-11. Phase 2: add diff viewer
-12. Later phase: add Git internals mode
+The MVP does not modify repositories.
+
+Not included:
+
+- commit creation
+- checkout
+- branch creation or deletion
+- tag creation or deletion
+- reset
+- merge
+- rebase
+- push
+- pull
+- fetch
+- stash apply or pop
+- repository script execution
+- cloud sync or telemetry
+
+## Performance Notes
+
+- Initial graph loading is capped at 500 commits.
+- The graph can explicitly load more commits in 500-commit steps, capped at 2,000 commits.
+- Diffs are lazy-loaded only after a file is selected.
+- Large textual diffs are truncated for safety.
+- Binary diffs are not rendered.
+- SVG rendering is used for inspectability; Canvas or virtualization can be added later for very large histories.
+
+## Limitations
+
+- Packfiles are not parsed by the educational custom parser yet.
+- The custom parser only handles loose commit objects.
+- The graph layout is intentionally simple and deterministic.
+- File watching is not implemented.
+- Packaging has been tested only on the current Windows development environment.
+
+## Roadmap
+
+- Add graph virtualization or Canvas rendering for very large repositories.
+- Add tree and blob internals viewers.
+- Add packfile parser support.
+- Add a graph minimap.
+- Add exportable screenshots or graph image export.
+- Add Playwright end-to-end tests once the MVP shell stabilizes.
+- Add polished portfolio screenshots and demo video.
+
+## Architecture Summary
+
+- Tauri provides the desktop shell.
+- Rust owns repository validation, Git reads, graph data, and parser logic.
+- `git2` is the production Git provider.
+- The custom loose-object parser is separate and educational.
+- React and TypeScript own UI state, graph rendering, and user interaction.
 
 ## License
 
-Choose a license before publishing.
-
-Recommended options:
-
-- MIT for open source portfolio use
-- Apache-2.0 for more formal open source use
-- Private license if commercial use is planned
+Choose a license before publishing. MIT is a good default for an open-source portfolio project.

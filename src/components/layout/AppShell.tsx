@@ -14,6 +14,7 @@ export function AppShell() {
   const commitDetailsStore = useCommitDetailsStore();
   const uiStore = useUiStore();
   const loadedGraphPath = useRef<string | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const isLoading = repositoryStore.isLoading || graphStore.isLoading;
   const error = repositoryStore.error ?? graphStore.error;
   const branchOptions = useMemo(() => {
@@ -108,6 +109,37 @@ export function AppShell() {
     repositoryStore.repository?.path,
   ]);
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      const target = event.target;
+      const isTyping =
+        target instanceof HTMLElement &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable);
+
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "o") {
+        event.preventDefault();
+        void repositoryStore.openRepositoryPicker();
+        return;
+      }
+
+      if (!isTyping && event.key === "/") {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+
+      if (!isTyping && event.key === "0") {
+        event.preventDefault();
+        uiStore.resetGraphView();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [repositoryStore, uiStore]);
+
   return (
     <div className="flex min-h-screen flex-col bg-[#090b10] text-slate-100">
       <TopBar
@@ -131,6 +163,7 @@ export function AppShell() {
           repository={repositoryStore.repository}
           repositoryData={repositoryStore.repositoryData}
           searchQuery={graphStore.searchQuery}
+          searchInputRef={searchInputRef}
           selectedBranchName={graphStore.selectedBranchName}
           selectedCommitId={graphStore.selectedCommitId}
         />
@@ -142,6 +175,17 @@ export function AppShell() {
           onOpenRepository={repositoryStore.openRepositoryPicker}
           onPan={uiStore.panGraph}
           onResetView={uiStore.resetGraphView}
+          onLoadMore={() => {
+            const path = repositoryStore.repository?.path;
+
+            if (!path) {
+              return;
+            }
+
+            void graphStore.loadMoreCommitGraph(path).catch(() => {
+              // The graph store keeps the user-safe error for the viewport.
+            });
+          }}
           onSelectCommit={graphStore.selectCommit}
           onZoomIn={uiStore.zoomIn}
           onZoomOut={uiStore.zoomOut}
@@ -150,6 +194,8 @@ export function AppShell() {
           selectedCommitId={graphStore.selectedCommitId}
           visibleCommitIds={graphStore.visibleCommitIds}
           zoom={uiStore.graphZoom}
+          canLoadMore={graphStore.canLoadMore}
+          commitLimit={graphStore.commitLimit}
         />
         <DetailsPanel
           branchComparison={commitDetailsStore.branchComparison}

@@ -8,7 +8,7 @@ use crate::graph::graph_builder;
 use crate::models::graph::CommitGraphResponse;
 
 const DEFAULT_COMMIT_LIMIT: usize = 500;
-const MAX_COMMIT_LIMIT: usize = 500;
+const MAX_COMMIT_LIMIT: usize = 2_000;
 
 pub fn load_commit_graph(
     path: String,

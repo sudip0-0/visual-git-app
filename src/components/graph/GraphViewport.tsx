@@ -15,6 +15,9 @@ type GraphViewportProps = {
   visibleCommitIds: Set<string>;
   pan: { x: number; y: number };
   zoom: number;
+  canLoadMore: boolean;
+  commitLimit: number;
+  onLoadMore: () => void;
   onOpenRepository: () => void;
   onPan: (deltaX: number, deltaY: number) => void;
   onResetView: () => void;
@@ -33,6 +36,9 @@ export function GraphViewport({
   visibleCommitIds,
   pan,
   zoom,
+  canLoadMore,
+  commitLimit,
+  onLoadMore,
   onOpenRepository,
   onPan,
   onResetView,
@@ -68,6 +74,9 @@ export function GraphViewport({
     return (
       <GraphShell>
         <StatusPanel title="Loading commit graph">
+          <div className="mx-auto mb-5 h-1.5 w-52 overflow-hidden rounded-full bg-slate-800">
+            <div className="h-full w-1/2 animate-pulse rounded-full bg-cyan-400/70" />
+          </div>
           <p className="text-sm leading-6 text-slate-400">
             Reading repository history and preparing graph lanes.
           </p>
@@ -81,6 +90,7 @@ export function GraphViewport({
       <GraphShell>
         <StatusPanel title="Graph could not load">
           <p className="text-sm leading-6 text-red-200">{error.message}</p>
+          <p className="mt-2 font-mono text-xs text-slate-500">{error.code}</p>
           <div className="mt-5">
             <OpenRepositoryButton
               isLoading={isLoading}
@@ -118,6 +128,9 @@ export function GraphViewport({
           <p className="break-all text-sm leading-6 text-slate-400">
             {repository.path}
           </p>
+          <p className="mt-3 text-sm leading-6 text-slate-500">
+            This repository is valid but has no commits on HEAD yet.
+          </p>
         </StatusPanel>
       </GraphShell>
     );
@@ -132,11 +145,28 @@ export function GraphViewport({
               {repository.name}
             </h2>
             <p className="mt-1 text-xs text-slate-500">
-              {graph.commits.length} commits, {graph.edges.length} edges
+              {graph.commits.length} commits, {graph.edges.length} edges, limit {commitLimit}
             </p>
+            {graph.commits.length >= 1_000 ? (
+              <p className="mt-1 text-xs text-amber-300">
+                Large graph mode: rendering is capped by loaded commits to keep the UI responsive.
+              </p>
+            ) : null}
           </div>
-          <div className="shrink-0 rounded border border-slate-800 px-2 py-1 text-xs text-slate-400">
-            SVG
+          <div className="flex shrink-0 items-center gap-2">
+            {canLoadMore ? (
+              <button
+                className="rounded border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-300 hover:border-slate-600 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isLoading}
+                onClick={onLoadMore}
+                type="button"
+              >
+                Load 500 more
+              </button>
+            ) : null}
+            <div className="rounded border border-slate-800 px-2 py-1 text-xs text-slate-400">
+              SVG
+            </div>
           </div>
         </div>
       </div>
