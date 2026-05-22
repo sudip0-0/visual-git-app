@@ -47,7 +47,7 @@ export function GraphArea({
   onZoomOut,
 }: GraphAreaProps) {
   return (
-    <main className="h-full min-h-0 overflow-hidden">
+    <main className="h-full min-h-0 overflow-auto">
       <GraphViewport
         error={error}
         graph={graph}

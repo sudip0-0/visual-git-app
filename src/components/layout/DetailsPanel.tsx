@@ -51,7 +51,7 @@ export function DetailsPanel({
   selectedChangedFilePath,
 }: DetailsPanelProps) {
   return (
-    <aside className="h-full overflow-hidden border-l border-slate-800 bg-slate-950 p-4">
+    <aside className="h-full overflow-y-auto border-l border-slate-800 bg-slate-950 p-4">
       <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
         Commit Details
       </h2>

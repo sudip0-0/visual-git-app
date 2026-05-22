@@ -51,7 +51,7 @@ export function Sidebar({
   onSelectTag,
 }: SidebarProps) {
   return (
-    <aside className="h-full overflow-hidden border-r border-slate-800 bg-slate-950/80 p-4">
+    <aside className="h-full overflow-y-auto border-r border-slate-800 bg-slate-950/80 p-4">
       <section>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
