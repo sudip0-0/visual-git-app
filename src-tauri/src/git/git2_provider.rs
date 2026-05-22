@@ -10,6 +10,7 @@ use crate::models::branch::BranchInfo;
 use crate::models::commit::CommitInfo;
 use crate::models::compare::BranchComparison;
 use crate::models::diff::{ChangedFile, ChangedFileStatus, CommitFileDiff};
+use crate::models::internals::{CommitInternals, GitInternals, HeadInternals};
 use crate::models::repository::RepositorySummary;
 use crate::models::tag::TagInfo;
 
@@ -313,9 +314,32 @@ impl GitProvider for Git2Provider {
             merge_base,
         })
     }
+
+    fn internals(&self, commit_hash: Option<&str>) -> Result<GitInternals, AppError> {
+        let selected_commit = match commit_hash {
+            Some(hash) => Some(self.commit_internals(hash)?),
+            None => None,
+        };
+
+        Ok(GitInternals {
+            head: self.head_internals(),
+            selected_commit,
+            loose_object: None,
+            explanations: vec![
+                "HEAD is Git's pointer to the currently checked-out branch or commit.".to_owned(),
+                "A branch is a ref file whose content is the commit hash at the branch tip.".to_owned(),
+                "A commit object points to one tree object and zero or more parent commits.".to_owned(),
+                "Loose objects are stored under .git/objects by the first two hash characters, but many repositories pack older objects into packfiles.".to_owned(),
+            ],
+        })
+    }
 }
 
 impl Git2Provider {
+    pub fn git_dir(&self) -> PathBuf {
+        self.repo.path().to_path_buf()
+    }
+
     fn find_commit(&self, commit_hash: &str) -> Result<git2::Commit<'_>, AppError> {
         let oid = Oid::from_str(commit_hash.trim())
             .map_err(|_| AppError::invalid_path("Invalid commit hash."))?;
@@ -369,6 +393,84 @@ impl Git2Provider {
             Err(error) => Err(map_git_read_error(error)),
         }
     }
+
+    fn head_internals(&self) -> HeadInternals {
+        let raw_value = fs::read_to_string(self.repo.path().join("HEAD"))
+            .ok()
+            .map(|value| value.trim().to_owned());
+        let head = self.repo.head().ok();
+        let is_detached = self.repo.head_detached().unwrap_or(false);
+        let current_ref_path = head
+            .as_ref()
+            .filter(|reference| reference.is_branch())
+            .and_then(|reference| reference.name().map(str::to_owned));
+        let current_branch = head
+            .as_ref()
+            .filter(|reference| reference.is_branch())
+            .and_then(|reference| reference.shorthand().map(str::to_owned));
+        let resolved_commit = head.as_ref().and_then(|reference| {
+            reference.target().map(|oid| oid.to_string()).or_else(|| {
+                reference
+                    .peel_to_commit()
+                    .ok()
+                    .map(|commit| commit.id().to_string())
+            })
+        });
+        let ref_target_commit = current_ref_path.as_ref().and_then(|name| {
+            self.repo.find_reference(name).ok().and_then(|reference| {
+                reference.target().map(|oid| oid.to_string()).or_else(|| {
+                    reference
+                        .peel_to_commit()
+                        .ok()
+                        .map(|commit| commit.id().to_string())
+                })
+            })
+        });
+        let explanation = if is_detached {
+            "HEAD contains a commit hash directly, so the repository is detached from a branch."
+                .to_owned()
+        } else if let Some(ref_path) = &current_ref_path {
+            format!("HEAD points to {ref_path}; that ref stores the current branch tip commit.")
+        } else {
+            "HEAD could not be resolved to a branch or commit.".to_owned()
+        };
+
+        HeadInternals {
+            raw_value,
+            is_detached,
+            current_ref_path,
+            current_branch,
+            resolved_commit,
+            ref_target_commit,
+            explanation,
+        }
+    }
+
+    fn commit_internals(&self, commit_hash: &str) -> Result<CommitInternals, AppError> {
+        let commit = self.find_commit(commit_hash)?;
+        let commit_hash = commit.id().to_string();
+        let object_path = loose_object_path(self.repo.path(), &commit_hash)
+            .to_string_lossy()
+            .into_owned();
+        let author = signature_raw(&commit.author());
+        let committer = signature_raw(&commit.committer());
+
+        Ok(CommitInternals {
+            object_type: "commit".to_owned(),
+            commit_hash: commit_hash.clone(),
+            tree_hash: commit.tree_id().to_string(),
+            parent_hashes: commit.parent_ids().map(|parent| parent.to_string()).collect(),
+            author,
+            committer,
+            message: commit.message().unwrap_or("").to_owned(),
+            object_path,
+            object_path_explanation: format!(
+                "If this commit is stored as a loose object, Git places it at .git/objects/{}/{} using the first two hash characters as a directory.",
+                &commit_hash[0..2],
+                &commit_hash[2..]
+            ),
+        })
+    }
 }
 
 fn repository_name(path: &Path) -> String {
@@ -405,6 +507,26 @@ fn tag_target(repo: &Repository, name: &str) -> Option<String> {
         .ok()
         .map(|commit| commit.id().to_string())
         .or_else(|| reference.target().map(|target| target.to_string()))
+}
+
+fn loose_object_path(git_dir: &Path, hash: &str) -> PathBuf {
+    git_dir.join("objects").join(&hash[0..2]).join(&hash[2..])
+}
+
+fn signature_raw(signature: &git2::Signature<'_>) -> Option<String> {
+    let name = signature.name()?;
+    let email = signature.email()?;
+    let time = signature.when();
+    let offset = time.offset_minutes();
+    let sign = if offset < 0 { '-' } else { '+' };
+    let abs_offset = offset.abs();
+    let hours = abs_offset / 60;
+    let minutes = abs_offset % 60;
+
+    Some(format!(
+        "{name} <{email}> {} {sign}{hours:02}{minutes:02}",
+        time.seconds()
+    ))
 }
 
 fn normalize_pathspec(path: &str) -> Result<String, AppError> {

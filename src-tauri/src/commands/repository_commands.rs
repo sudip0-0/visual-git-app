@@ -4,6 +4,7 @@ use crate::models::branch::BranchInfo;
 use crate::models::commit::CommitInfo;
 use crate::models::compare::BranchComparison;
 use crate::models::diff::{ChangedFile, CommitFileDiff};
+use crate::models::internals::GitInternals;
 use crate::models::repository::RepositorySummary;
 use crate::models::tag::TagInfo;
 
@@ -54,4 +55,12 @@ pub fn compare_branches(
     target_branch: String,
 ) -> Result<BranchComparison, AppError> {
     repository_service::compare_branches(path, base_branch, target_branch)
+}
+
+#[tauri::command]
+pub fn load_git_internals(
+    path: String,
+    commit_hash: Option<String>,
+) -> Result<GitInternals, AppError> {
+    repository_service::load_git_internals(path, commit_hash)
 }

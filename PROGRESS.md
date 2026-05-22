@@ -2,17 +2,17 @@
 
 ## Current Project Status
 
-Git data engine, graph engine, graph UI, client-side search/filter interactions, commit changed-file inspection, on-demand diff viewing, and branch comparison are implemented.
+Git data engine, graph engine, graph UI, client-side search/filter interactions, commit changed-file inspection, on-demand diff viewing, branch comparison, and Git internals mode are implemented.
 
-The app can open a native folder picker, validate a selected local Git repository in Rust, load read-only repository metadata through a `GitProvider` abstraction, list local and remote branches, list tags, load recent commits with parent hashes and merge detection, build graph-ready commit data with lanes, edges, refs, and HEAD markers, render a scrollable SVG commit graph with selectable commits plus pan and zoom controls, search commits, highlight branch reachability, select tagged commits, show changed files for a selected commit, load file diffs only when requested, safely handle truncated and binary diffs, and compare branches with ahead/behind counts plus merge base. Rust and frontend checks pass.
+The app can open a native folder picker, validate a selected local Git repository in Rust, load read-only repository metadata through a `GitProvider` abstraction, list local and remote branches, list tags, load recent commits with parent hashes and merge detection, build graph-ready commit data with lanes, edges, refs, and HEAD markers, render a scrollable SVG commit graph with selectable commits plus pan and zoom controls, search commits, highlight branch reachability, select tagged commits, show changed files for a selected commit, load file diffs only when requested, safely handle truncated and binary diffs, compare branches with ahead/behind counts plus merge base, explain HEAD/ref resolution, show raw selected commit metadata, and demonstrate a separate read-only loose commit object parser. Rust and frontend checks pass.
 
 ## Current Phase
 
-Phase 7: Diff Viewer and Branch Comparison
+Phase 8: Git Internals Mode
 
 ## Current Focus
 
-Ready for Phase 8 planning.
+Ready for Phase 9 planning.
 
 ## Completed
 
@@ -36,9 +36,60 @@ None.
 
 ## Next Recommended Task
 
-TASK-0801: HEAD and refs explorer.
+Define the next scoped phase before adding more Git internals features.
 
 ## 2026-05-22
+
+### TASK-0801 to TASK-0803: Git internals mode
+
+Status: Done
+
+Summary:
+
+- Added a Git Internals panel in the details area with plain-language explanations.
+- Added a read-only Tauri command for HEAD/ref resolution and selected commit internals.
+- Showed raw HEAD value, current ref path, current branch, resolved commit, and ref target commit.
+- Showed selected commit object type, commit hash, tree hash, parent hashes, raw author, raw committer, message, and loose-object path explanation.
+- Added a separate prototype loose commit object parser under `git/loose_object_parser.rs`; it reads and decompresses loose commit objects only and reports packed objects without failing.
+- Kept the production path on `Git2Provider`; the custom parser is educational and does not replace `git2`.
+- Added Rust tests for loose commit parsing, packed/missing loose-object reporting, and internals input validation.
+- Confirmed the implementation remains read-only, does not execute repository files, and does not add Git write commands.
+
+Files changed:
+
+- `src-tauri/Cargo.toml`
+- `src-tauri/src/app/repository_service.rs`
+- `src-tauri/src/commands/repository_commands.rs`
+- `src-tauri/src/git/git2_provider.rs`
+- `src-tauri/src/git/loose_object_parser.rs`
+- `src-tauri/src/git/mod.rs`
+- `src-tauri/src/git/provider.rs`
+- `src-tauri/src/lib.rs`
+- `src-tauri/src/models/internals.rs`
+- `src-tauri/src/models/mod.rs`
+- `src/components/internals/GitInternalsPanel.tsx`
+- `src/components/layout/AppShell.tsx`
+- `src/components/layout/DetailsPanel.tsx`
+- `src/stores/commitDetailsStore.ts`
+- `src/types/git.ts`
+- `TASKS.md`
+- `DECISIONS.md`
+- `PROGRESS.md`
+
+Tests run:
+
+- `cargo fmt --check`
+- `cargo check`
+- `cargo clippy -- -D warnings`
+- `cargo test`
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test`
+
+Risks:
+
+- The custom parser intentionally supports loose commit objects only; packed objects are explained as not available rather than parsed.
+- Tree, blob, packfile, reflog, stash, and worktree internals remain future work.
 
 ### TASK-0701 to TASK-0703: Diff viewer and branch comparison
 

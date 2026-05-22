@@ -1,6 +1,11 @@
 import { invoke } from "@tauri-apps/api/core";
 import { useCallback, useMemo, useState } from "react";
-import type { BranchComparison, ChangedFile, CommitFileDiff } from "../types/git";
+import type {
+  BranchComparison,
+  ChangedFile,
+  CommitFileDiff,
+  GitInternals,
+} from "../types/git";
 import type { RepositoryError } from "../types/repository";
 
 function toRepositoryError(error: unknown): RepositoryError {
@@ -43,6 +48,9 @@ export function useCommitDetailsStore() {
   const [branchComparison, setBranchComparison] = useState<BranchComparison | null>(null);
   const [branchComparisonError, setBranchComparisonError] = useState<RepositoryError | null>(null);
   const [isBranchComparisonLoading, setIsBranchComparisonLoading] = useState(false);
+  const [gitInternals, setGitInternals] = useState<GitInternals | null>(null);
+  const [gitInternalsError, setGitInternalsError] = useState<RepositoryError | null>(null);
+  const [isGitInternalsLoading, setIsGitInternalsLoading] = useState(false);
 
   const clear = useCallback(() => {
     setChangedFilesCommitHash(null);
@@ -56,6 +64,9 @@ export function useCommitDetailsStore() {
     setBranchComparison(null);
     setBranchComparisonError(null);
     setIsBranchComparisonLoading(false);
+    setGitInternals(null);
+    setGitInternalsError(null);
+    setIsGitInternalsLoading(false);
   }, []);
 
   const loadChangedFiles = useCallback(async (path: string, commitHash: string) => {
@@ -147,6 +158,27 @@ export function useCommitDetailsStore() {
     [],
   );
 
+  const loadGitInternals = useCallback(async (path: string, commitHash: string | null) => {
+    setIsGitInternalsLoading(true);
+    setGitInternalsError(null);
+
+    try {
+      const internals = await invoke<GitInternals>("load_git_internals", {
+        path,
+        commitHash,
+      });
+      setGitInternals(internals);
+      return internals;
+    } catch (error) {
+      const repositoryError = toRepositoryError(error);
+      setGitInternals(null);
+      setGitInternalsError(repositoryError);
+      throw repositoryError;
+    } finally {
+      setIsGitInternalsLoading(false);
+    }
+  }, []);
+
   const selectedDiff = useMemo(() => {
     if (!changedFilesCommitHash || !selectedFilePath) {
       return null;
@@ -166,12 +198,16 @@ export function useCommitDetailsStore() {
       isBranchComparisonLoading,
       isChangedFilesLoading,
       isDiffLoading,
+      gitInternals,
+      gitInternalsError,
+      isGitInternalsLoading,
       selectedDiff,
       selectedFilePath,
       clear,
       loadBranchComparison,
       loadChangedFiles,
       loadFileDiff,
+      loadGitInternals,
     }),
     [
       branchComparison,
@@ -184,9 +220,13 @@ export function useCommitDetailsStore() {
       isBranchComparisonLoading,
       isChangedFilesLoading,
       isDiffLoading,
+      gitInternals,
+      gitInternalsError,
+      isGitInternalsLoading,
       loadBranchComparison,
       loadChangedFiles,
       loadFileDiff,
+      loadGitInternals,
       selectedDiff,
       selectedFilePath,
     ],

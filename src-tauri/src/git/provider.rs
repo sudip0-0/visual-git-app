@@ -3,6 +3,7 @@ use crate::models::branch::BranchInfo;
 use crate::models::commit::CommitInfo;
 use crate::models::compare::BranchComparison;
 use crate::models::diff::{ChangedFile, CommitFileDiff};
+use crate::models::internals::GitInternals;
 use crate::models::repository::RepositorySummary;
 use crate::models::tag::TagInfo;
 
@@ -19,4 +20,5 @@ pub trait GitProvider: Sized {
         base_branch: &str,
         target_branch: &str,
     ) -> Result<BranchComparison, AppError>;
+    fn internals(&self, commit_hash: Option<&str>) -> Result<GitInternals, AppError>;
 }

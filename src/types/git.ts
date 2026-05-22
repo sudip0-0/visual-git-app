@@ -51,6 +51,48 @@ export type BranchComparison = {
   mergeBase?: string;
 };
 
+export type HeadInternals = {
+  rawValue?: string;
+  isDetached: boolean;
+  currentRefPath?: string;
+  currentBranch?: string;
+  resolvedCommit?: string;
+  refTargetCommit?: string;
+  explanation: string;
+};
+
+export type CommitInternals = {
+  objectType: string;
+  commitHash: string;
+  treeHash: string;
+  parentHashes: string[];
+  author?: string;
+  committer?: string;
+  message: string;
+  objectPath: string;
+  objectPathExplanation: string;
+};
+
+export type LooseCommitObject = {
+  objectPath: string;
+  isAvailable: boolean;
+  objectType?: string;
+  declaredSize?: number;
+  treeHash?: string;
+  parentHashes: string[];
+  author?: string;
+  committer?: string;
+  message?: string;
+  explanation: string;
+};
+
+export type GitInternals = {
+  head: HeadInternals;
+  selectedCommit?: CommitInternals;
+  looseObject?: LooseCommitObject;
+  explanations: string[];
+};
+
 export type RepositoryData = {
   branches: BranchInfo[];
   tags: TagInfo[];

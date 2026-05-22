@@ -63,6 +63,24 @@ export function AppShell() {
 
   useEffect(() => {
     const path = repositoryStore.repository?.path;
+
+    if (!path) {
+      return;
+    }
+
+    void commitDetailsStore
+      .loadGitInternals(path, graphStore.selectedCommit?.id ?? null)
+      .catch(() => {
+        // Commit details store keeps user-safe error state.
+      });
+  }, [
+    commitDetailsStore,
+    graphStore.selectedCommit?.id,
+    repositoryStore.repository?.path,
+  ]);
+
+  useEffect(() => {
+    const path = repositoryStore.repository?.path;
     if (!path || branchOptions.length < 2) {
       return;
     }
@@ -143,6 +161,9 @@ export function AppShell() {
           isBranchComparisonLoading={commitDetailsStore.isBranchComparisonLoading}
           isChangedFilesLoading={commitDetailsStore.isChangedFilesLoading}
           isDiffLoading={commitDetailsStore.isDiffLoading}
+          gitInternals={commitDetailsStore.gitInternals}
+          gitInternalsError={commitDetailsStore.gitInternalsError}
+          isGitInternalsLoading={commitDetailsStore.isGitInternalsLoading}
           onSelectBranchComparison={(baseBranch, targetBranch) => {
             const path = repositoryStore.repository?.path;
 

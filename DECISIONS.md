@@ -309,3 +309,35 @@ Consequences:
 - First release can target Windows.
 - Rust path handling should use `PathBuf`, not string concatenation.
 - Cross-platform support remains a later goal.
+
+---
+
+## ADR-0010: Keep Git internals parser educational and separate
+
+Date: 2026-05-22
+
+Status: Accepted
+
+Context:
+
+Phase 8 adds Git internals mode. The product roadmap calls for a future custom `.git` parser, but the production repository reader already uses `git2` and should remain reliable and read-only.
+
+Decision:
+
+Add a separate loose commit object parser for educational display only. Continue using `Git2Provider` for production repository state, HEAD/ref resolution, graph data, and selected commit metadata.
+
+Reason:
+
+Loose commit parsing demonstrates how Git stores objects without taking on packfile, tree, blob, or full provider complexity. Keeping it separate prevents the educational parser from weakening the production path.
+
+Tradeoffs:
+
+- Packed objects are not parsed by the prototype.
+- The internals panel may show that a selected commit is not available as a loose object.
+- A direct `flate2` dependency is needed to decompress loose objects.
+
+Consequences:
+
+- Git internals mode can teach HEAD, refs, object paths, and commit structure now.
+- Future parser work can add packfiles, trees, and blobs without replacing the `git2` provider.
+- The MVP remains read-only and avoids Git CLI calls.

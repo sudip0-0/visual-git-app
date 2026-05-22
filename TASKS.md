@@ -691,7 +691,7 @@ Acceptance Criteria:
 
 ### TASK-0801: HEAD and refs explorer
 
-Status: Todo
+Status: Done
 
 Description:
 Show how HEAD resolves to branch and commit.
@@ -707,7 +707,7 @@ Acceptance Criteria:
 
 ### TASK-0802: Raw object viewer
 
-Status: Todo
+Status: Done
 
 Description:
 Show raw Git object data for selected commit.
@@ -725,7 +725,7 @@ Acceptance Criteria:
 
 ### TASK-0803: Custom `.git` parser prototype
 
-Status: Todo
+Status: Done
 
 Description:
 Create educational custom parser for loose commit objects.

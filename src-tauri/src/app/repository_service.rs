@@ -2,12 +2,14 @@ use std::path::PathBuf;
 
 use crate::errors::AppError;
 use crate::git::git2_provider::Git2Provider;
+use crate::git::loose_object_parser::LooseObjectParser;
 use crate::git::provider::GitProvider;
 use crate::git::repository_validator;
 use crate::models::branch::BranchInfo;
 use crate::models::commit::CommitInfo;
 use crate::models::compare::BranchComparison;
 use crate::models::diff::{ChangedFile, CommitFileDiff};
+use crate::models::internals::GitInternals;
 use crate::models::repository::RepositorySummary;
 use crate::models::tag::TagInfo;
 
@@ -65,6 +67,25 @@ pub fn compare_branches(
     let target_branch = validate_non_empty(&target_branch, "Select a target branch first.")?;
 
     open_provider(path)?.compare_branches(base_branch, target_branch)
+}
+
+pub fn load_git_internals(
+    path: String,
+    commit_hash: Option<String>,
+) -> Result<GitInternals, AppError> {
+    let commit_hash = commit_hash
+        .as_deref()
+        .map(|hash| validate_non_empty(hash, "Select a commit first."))
+        .transpose()?;
+    let provider = open_provider(path)?;
+    let mut internals = provider.internals(commit_hash)?;
+
+    if let Some(hash) = commit_hash {
+        internals.loose_object =
+            Some(LooseObjectParser::new(provider.git_dir()).parse_commit(hash)?);
+    }
+
+    Ok(internals)
 }
 
 fn open_provider(path: String) -> Result<Git2Provider, AppError> {
@@ -138,5 +159,14 @@ mod tests {
 
         assert_eq!(error.code, crate::errors::AppErrorCode::InvalidPath);
         assert_eq!(error.message, "Select a target branch first.");
+    }
+
+    #[test]
+    fn rejects_empty_commit_hash_for_internals() {
+        let error = load_git_internals("repo".to_owned(), Some("   ".to_owned()))
+            .expect_err("empty commit hash should fail");
+
+        assert_eq!(error.code, crate::errors::AppErrorCode::InvalidPath);
+        assert_eq!(error.message, "Select a commit first.");
     }
 }

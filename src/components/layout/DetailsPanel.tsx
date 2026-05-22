@@ -1,5 +1,11 @@
 import { CommitDetailsPanel } from "../commit/CommitDetailsPanel";
-import type { BranchComparison, ChangedFile, CommitFileDiff } from "../../types/git";
+import { GitInternalsPanel } from "../internals/GitInternalsPanel";
+import type {
+  BranchComparison,
+  ChangedFile,
+  CommitFileDiff,
+  GitInternals,
+} from "../../types/git";
 import type { GraphCommitNode } from "../../types/graph";
 import type { RepositoryError, RepositorySummary } from "../../types/repository";
 
@@ -16,6 +22,9 @@ type DetailsPanelProps = {
   isChangedFilesLoading: boolean;
   isDiffLoading: boolean;
   isBranchComparisonLoading: boolean;
+  gitInternals: GitInternals | null;
+  gitInternalsError: RepositoryError | null;
+  isGitInternalsLoading: boolean;
   onSelectChangedFile: (filePath: string) => void;
   onSelectBranchComparison: (baseBranch: string, targetBranch: string) => void;
   selectedChangedFilePath: string | null;
@@ -34,6 +43,9 @@ export function DetailsPanel({
   isChangedFilesLoading,
   isDiffLoading,
   isBranchComparisonLoading,
+  gitInternals,
+  gitInternalsError,
+  isGitInternalsLoading,
   onSelectChangedFile,
   onSelectBranchComparison,
   selectedChangedFilePath,
@@ -75,6 +87,11 @@ export function DetailsPanel({
           </p>
         </section>
       ) : null}
+      <GitInternalsPanel
+        error={gitInternalsError}
+        internals={gitInternals}
+        isLoading={isGitInternalsLoading}
+      />
     </aside>
   );
 }
