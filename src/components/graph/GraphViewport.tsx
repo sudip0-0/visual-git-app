@@ -137,7 +137,7 @@ export function GraphViewport({
   }
 
   return (
-    <div className="relative h-full min-h-[calc(100vh-3.5rem)] overflow-auto bg-[#0c1018]">
+    <div className="relative h-full min-h-0 overflow-auto bg-[#0c1018]">
       <div className="sticky top-0 z-10 border-b border-slate-800 bg-slate-950/90 px-5 py-3 backdrop-blur">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
@@ -237,9 +237,9 @@ export function GraphViewport({
 
 function GraphShell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="relative overflow-hidden bg-[#0c1018]">
+    <main className="relative h-full min-h-0 overflow-hidden bg-[#0c1018]">
       <div className="absolute inset-0 bg-[linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] bg-[size:32px_32px]" />
-      <div className="relative flex h-full min-h-[calc(100vh-3.5rem)] items-center justify-center p-8">
+      <div className="relative flex h-full min-h-0 items-center justify-center p-8">
         {children}
       </div>
     </main>

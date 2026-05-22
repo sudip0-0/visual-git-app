@@ -40,6 +40,45 @@ Define the next scoped phase before adding more Git internals features.
 
 ## 2026-05-22
 
+### Fixed graph-only scrolling layout
+
+Status: Done
+
+Summary:
+
+- Changed the app shell to a fixed-height desktop layout so the page itself does not scroll.
+- Kept the left repository panel and right commit-details panel fixed in the visible app frame.
+- Isolated scrolling to the middle graph viewport.
+- Removed viewport-height minimums from the graph viewport states so they fit inside the fixed shell.
+
+Files changed:
+
+- `src/components/layout/AppShell.tsx`
+- `src/components/layout/Sidebar.tsx`
+- `src/components/layout/DetailsPanel.tsx`
+- `src/components/layout/GraphArea.tsx`
+- `src/components/graph/GraphViewport.tsx`
+- `PROGRESS.md`
+
+Tests run:
+
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test`
+- Local Vite dev server startup at `http://127.0.0.1:1420/`
+
+Result:
+
+- Passed.
+
+Risks:
+
+- Browser automation timed out while connecting to the in-app browser, so the final verification was source-level plus dev-server startup rather than screenshot-based.
+
+Next recommended task:
+
+- Manually open a large repository and confirm the side panels stay fixed while scrolling the graph.
+
 ### Phase 9 quality check
 
 Status: Done

@@ -148,7 +148,7 @@ export function AppShell() {
   }, [openRepositoryPicker, resetGraphView]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#090b10] text-slate-100">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#090b10] text-slate-100">
       <TopBar
         isLoading={isLoading}
         onOpenRepository={repositoryStore.openRepositoryPicker}

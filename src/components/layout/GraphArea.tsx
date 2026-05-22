@@ -47,25 +47,27 @@ export function GraphArea({
   onZoomOut,
 }: GraphAreaProps) {
   return (
-    <GraphViewport
-      error={error}
-      graph={graph}
-      isLoading={isLoading}
-      matchingCommitIds={matchingCommitIds}
-      canLoadMore={canLoadMore}
-      commitLimit={commitLimit}
-      onLoadMore={onLoadMore}
-      onOpenRepository={onOpenRepository}
-      onPan={onPan}
-      onResetView={onResetView}
-      onSelectCommit={onSelectCommit}
-      onZoomIn={onZoomIn}
-      onZoomOut={onZoomOut}
-      pan={pan}
-      repository={repository}
-      selectedCommitId={selectedCommitId}
-      visibleCommitIds={visibleCommitIds}
-      zoom={zoom}
-    />
+    <main className="h-full min-h-0 overflow-hidden">
+      <GraphViewport
+        error={error}
+        graph={graph}
+        isLoading={isLoading}
+        matchingCommitIds={matchingCommitIds}
+        canLoadMore={canLoadMore}
+        commitLimit={commitLimit}
+        onLoadMore={onLoadMore}
+        onOpenRepository={onOpenRepository}
+        onPan={onPan}
+        onResetView={onResetView}
+        onSelectCommit={onSelectCommit}
+        onZoomIn={onZoomIn}
+        onZoomOut={onZoomOut}
+        pan={pan}
+        repository={repository}
+        selectedCommitId={selectedCommitId}
+        visibleCommitIds={visibleCommitIds}
+        zoom={zoom}
+      />
+    </main>
   );
 }
