@@ -555,7 +555,7 @@ Checks:
 
 ### TASK-0601: Commit search
 
-Status: Todo
+Status: Done
 
 Description:
 Search commits by hash, message, or author.
@@ -585,7 +585,7 @@ Checks:
 
 ### TASK-0602: Branch filter
 
-Status: Todo
+Status: Done
 
 Description:
 Filter or highlight graph by branch.
@@ -612,7 +612,7 @@ Checks:
 
 ### TASK-0603: Tag markers
 
-Status: Todo
+Status: Done
 
 Description:
 Show tags on commit graph.

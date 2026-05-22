@@ -96,6 +96,41 @@ Next recommended task:
 
 - TASK-0701: Commit changed files.
 
+### Phase 6 quality check
+
+Status: Done
+
+Summary:
+
+- Verified Phase 6 search and filter behavior against the acceptance checklist:
+  - search input, hash/message/author matching, search highlight, clickable results, and result-to-selection flow
+  - branch and tag sidebar visibility, current-branch label, branch highlight filter, clear filter, and tag-to-selection flow
+- Verified graph loading/selection integration remains read-only with no checkout or other Git mutation paths.
+- Kept a small UI clarity fix in place for branch labeling (`current` badge) and retained selected-commit focus behavior in the graph viewport.
+
+Files changed:
+
+- `src/components/branches/BranchList.tsx`
+- `src/components/graph/GraphViewport.tsx`
+- `TASKS.md`
+- `PROGRESS.md`
+
+Tests run:
+
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test`
+- `cargo check` (from `src-tauri`)
+- `cargo test` (from `src-tauri`)
+
+Result:
+
+- Passed.
+
+Next recommended task:
+
+- TASK-0701: Commit changed files.
+
 ## 2026-05-21
 
 ### Phase 5 quality check

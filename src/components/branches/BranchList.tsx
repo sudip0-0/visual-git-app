@@ -42,11 +42,10 @@ export function BranchList({
               type="button"
             >
               <span className="truncate">
-                {branch.isCurrent ? "* " : ""}
                 {branch.name}
               </span>
               <span className="shrink-0 text-slate-500">
-                {branch.isRemote ? "remote" : "local"}
+                {branch.isCurrent ? "current" : branch.isRemote ? "remote" : "local"}
               </span>
             </button>
           </li>

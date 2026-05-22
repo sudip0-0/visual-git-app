@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CommitGraphResponse } from "../../types/graph";
 import type { RepositoryError, RepositorySummary } from "../../types/repository";
 import { OpenRepositoryButton } from "../repository/OpenRepositoryButton";
@@ -42,6 +42,27 @@ export function GraphViewport({
 }: GraphViewportProps) {
   const [isPanning, setIsPanning] = useState(false);
   const lastPointer = useRef<{ x: number; y: number } | null>(null);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!graph || !selectedCommitId) {
+      return;
+    }
+
+    const selectedCommit = graph.commits.find(
+      (commit) => commit.id === selectedCommitId,
+    );
+
+    if (!selectedCommit) {
+      return;
+    }
+
+    viewportRef.current?.scrollTo({
+      left: Math.max(0, selectedCommit.x * zoom + pan.x - 160),
+      top: Math.max(0, selectedCommit.y * zoom + pan.y - 180),
+      behavior: "smooth",
+    });
+  }, [graph, pan.x, pan.y, selectedCommitId, zoom]);
 
   if (isLoading) {
     return (
@@ -129,6 +150,7 @@ export function GraphViewport({
       </div>
       <div
         className={isPanning ? "h-full cursor-grabbing" : "h-full cursor-grab"}
+        ref={viewportRef}
         onPointerCancel={() => {
           lastPointer.current = null;
           setIsPanning(false);
