@@ -5,12 +5,16 @@ import { CommitNode } from "./CommitNode";
 type CommitGraphProps = {
   graph: CommitGraphResponse;
   selectedCommitId: string | null;
+  matchingCommitIds: Set<string>;
+  visibleCommitIds: Set<string>;
   onSelectCommit: (commitId: string) => void;
 };
 
 export function CommitGraph({
   graph,
   selectedCommitId,
+  matchingCommitIds,
+  visibleCommitIds,
   onSelectCommit,
 }: CommitGraphProps) {
   const nodesById = new Map(graph.commits.map((commit) => [commit.id, commit]));
@@ -55,6 +59,8 @@ export function CommitGraph({
         {graph.commits.map((commit) => (
           <CommitNode
             commit={commit}
+            isDimmed={!visibleCommitIds.has(commit.id)}
+            isSearchMatch={matchingCommitIds.has(commit.id)}
             isSelected={commit.id === selectedCommitId}
             key={commit.id}
             onSelectCommit={onSelectCommit}

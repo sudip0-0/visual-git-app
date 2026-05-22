@@ -1,5 +1,10 @@
+import { BranchList } from "../branches/BranchList";
+import { TagList } from "../branches/TagList";
 import { RecentRepositories } from "../repository/RecentRepositories";
+import { CommitSearch } from "../search/CommitSearch";
+import { SearchResults } from "../search/SearchResults";
 import type { RepositoryData } from "../../types/git";
+import type { GraphCommitNode } from "../../types/graph";
 import type {
   RecentRepository,
   RepositorySummary,
@@ -10,8 +15,18 @@ type SidebarProps = {
   repositoryData: RepositoryData | null;
   recentRepositories: RecentRepository[];
   isLoading: boolean;
+  matchingCommits: GraphCommitNode[];
+  searchQuery: string;
+  selectedBranchName: string | null;
+  selectedCommitId: string | null;
+  onClearBranchFilter: () => void;
+  onClearSearch: () => void;
   onOpenRecentRepository: (path: string) => void;
   onRemoveRecentRepository: (path: string) => void;
+  onSearchChange: (query: string) => void;
+  onSelectBranch: (branchName: string) => void;
+  onSelectCommit: (commitId: string) => void;
+  onSelectTag: (commitId: string) => void;
 };
 
 export function Sidebar({
@@ -19,8 +34,18 @@ export function Sidebar({
   repositoryData,
   recentRepositories,
   isLoading,
+  matchingCommits,
+  searchQuery,
+  selectedBranchName,
+  selectedCommitId,
+  onClearBranchFilter,
+  onClearSearch,
   onOpenRecentRepository,
   onRemoveRecentRepository,
+  onSearchChange,
+  onSelectBranch,
+  onSelectCommit,
+  onSelectTag,
 }: SidebarProps) {
   return (
     <aside className="border-r border-slate-800 bg-slate-950/80 p-4">
@@ -69,48 +94,34 @@ export function Sidebar({
 
       {repositoryData ? (
         <section className="mt-6">
+          <CommitSearch
+            onClearSearch={onClearSearch}
+            onSearchChange={onSearchChange}
+            query={searchQuery}
+            resultCount={matchingCommits.length}
+          />
+          <SearchResults
+            commits={matchingCommits}
+            onSelectCommit={onSelectCommit}
+            query={searchQuery}
+            selectedCommitId={selectedCommitId}
+          />
+        </section>
+      ) : null}
+
+      {repositoryData ? (
+        <section className="mt-6">
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
             Refs
           </h2>
           <div className="space-y-4 rounded-md border border-slate-800 bg-slate-900/50 p-3">
-            <div>
-              <div className="mb-2 flex items-center justify-between text-xs">
-                <span className="font-medium text-slate-400">Branches</span>
-                <span className="text-slate-500">
-                  {repositoryData.branches.length}
-                </span>
-              </div>
-              <ul className="space-y-1 text-xs text-slate-300">
-                {repositoryData.branches.slice(0, 6).map((branch) => (
-                  <li className="flex justify-between gap-3" key={branch.fullName}>
-                    <span className="truncate">
-                      {branch.isCurrent ? "* " : ""}
-                      {branch.name}
-                    </span>
-                    <span className="shrink-0 text-slate-500">
-                      {branch.isRemote ? "remote" : "local"}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <div className="mb-2 flex items-center justify-between text-xs">
-                <span className="font-medium text-slate-400">Tags</span>
-                <span className="text-slate-500">{repositoryData.tags.length}</span>
-              </div>
-              {repositoryData.tags.length > 0 ? (
-                <ul className="space-y-1 text-xs text-slate-300">
-                  {repositoryData.tags.slice(0, 6).map((tag) => (
-                    <li className="truncate" key={tag.name}>
-                      {tag.name}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-xs text-slate-500">No tags found.</p>
-              )}
-            </div>
+            <BranchList
+              branches={repositoryData.branches}
+              onClearBranchFilter={onClearBranchFilter}
+              onSelectBranch={onSelectBranch}
+              selectedBranchName={selectedBranchName}
+            />
+            <TagList onSelectTag={(tag) => tag.target && onSelectTag(tag.target)} tags={repositoryData.tags} />
           </div>
         </section>
       ) : null}

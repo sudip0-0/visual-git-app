@@ -11,6 +11,8 @@ type GraphAreaProps = {
   error: RepositoryError | null;
   isLoading: boolean;
   selectedCommitId: string | null;
+  matchingCommitIds: Set<string>;
+  visibleCommitIds: Set<string>;
   pan: { x: number; y: number };
   zoom: number;
   onOpenRepository: () => void;
@@ -27,6 +29,8 @@ export function GraphArea({
   error,
   isLoading,
   selectedCommitId,
+  matchingCommitIds,
+  visibleCommitIds,
   pan,
   zoom,
   onOpenRepository,
@@ -41,6 +45,7 @@ export function GraphArea({
       error={error}
       graph={graph}
       isLoading={isLoading}
+      matchingCommitIds={matchingCommitIds}
       onOpenRepository={onOpenRepository}
       onPan={onPan}
       onResetView={onResetView}
@@ -50,6 +55,7 @@ export function GraphArea({
       pan={pan}
       repository={repository}
       selectedCommitId={selectedCommitId}
+      visibleCommitIds={visibleCommitIds}
       zoom={zoom}
     />
   );

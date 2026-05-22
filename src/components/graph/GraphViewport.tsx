@@ -11,6 +11,8 @@ type GraphViewportProps = {
   error: RepositoryError | null;
   isLoading: boolean;
   selectedCommitId: string | null;
+  matchingCommitIds: Set<string>;
+  visibleCommitIds: Set<string>;
   pan: { x: number; y: number };
   zoom: number;
   onOpenRepository: () => void;
@@ -27,6 +29,8 @@ export function GraphViewport({
   error,
   isLoading,
   selectedCommitId,
+  matchingCommitIds,
+  visibleCommitIds,
   pan,
   zoom,
   onOpenRepository,
@@ -168,8 +172,10 @@ export function GraphViewport({
         >
           <CommitGraph
             graph={graph}
+            matchingCommitIds={matchingCommitIds}
             onSelectCommit={onSelectCommit}
             selectedCommitId={selectedCommitId}
+            visibleCommitIds={visibleCommitIds}
           />
         </div>
       </div>

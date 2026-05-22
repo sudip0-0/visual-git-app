@@ -468,7 +468,7 @@ Checks:
 
 ### TASK-0501: Render basic commit graph
 
-Status: Todo
+Status: Done
 
 Description:
 Render nodes and edges using SVG.
@@ -498,7 +498,7 @@ Checks:
 
 ### TASK-0502: Select commit and show details
 
-Status: Todo
+Status: Done
 
 Description:
 Click a commit node to display details.
@@ -526,7 +526,7 @@ Checks:
 
 ### TASK-0503: Add graph pan and zoom
 
-Status: Todo
+Status: Done
 
 Description:
 Add basic graph navigation.

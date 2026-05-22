@@ -21,6 +21,7 @@ pub struct CommitGraphResponse {
 pub struct GraphCommitNode {
     pub id: String,
     pub short_id: String,
+    pub message: String,
     pub summary: String,
     pub author_name: Option<String>,
     pub author_time: i64,

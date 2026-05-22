@@ -44,16 +44,27 @@ export function AppShell() {
       <div className="grid min-h-0 flex-1 grid-cols-[260px_minmax(0,1fr)_320px] border-t border-slate-800">
         <Sidebar
           isLoading={isLoading}
+          matchingCommits={graphStore.matchingCommits}
+          onClearBranchFilter={() => graphStore.setBranchFilter(null)}
+          onClearSearch={graphStore.clearSearch}
           onOpenRecentRepository={repositoryStore.validateRepositoryPath}
           onRemoveRecentRepository={repositoryStore.removeRecentRepository}
+          onSearchChange={graphStore.setSearch}
+          onSelectBranch={graphStore.setBranchFilter}
+          onSelectCommit={graphStore.selectCommit}
+          onSelectTag={graphStore.selectCommit}
           recentRepositories={repositoryStore.recentRepositories}
           repository={repositoryStore.repository}
           repositoryData={repositoryStore.repositoryData}
+          searchQuery={graphStore.searchQuery}
+          selectedBranchName={graphStore.selectedBranchName}
+          selectedCommitId={graphStore.selectedCommitId}
         />
         <GraphArea
           error={error}
           graph={graphStore.graph}
           isLoading={isLoading}
+          matchingCommitIds={graphStore.matchingCommitIds}
           onOpenRepository={repositoryStore.openRepositoryPicker}
           onPan={uiStore.panGraph}
           onResetView={uiStore.resetGraphView}
@@ -63,6 +74,7 @@ export function AppShell() {
           pan={uiStore.graphPan}
           repository={repositoryStore.repository}
           selectedCommitId={graphStore.selectedCommitId}
+          visibleCommitIds={graphStore.visibleCommitIds}
           zoom={uiStore.graphZoom}
         />
         <DetailsPanel

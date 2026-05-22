@@ -43,6 +43,7 @@ pub fn build_commit_graph(
             GraphCommitNode {
                 id: commit.id.clone(),
                 short_id: commit.short_id.clone(),
+                message: commit.message.clone(),
                 summary: commit.summary.clone(),
                 author_name: commit.author_name.clone(),
                 author_time: commit.author_time,
@@ -345,6 +346,7 @@ mod tests {
             .map(|node| {
                 (
                     node.id.as_str(),
+                    node.message.clone(),
                     node.x,
                     node.y,
                     node.lane,
@@ -359,6 +361,7 @@ mod tests {
             .map(|node| {
                 (
                     node.id.as_str(),
+                    node.message.clone(),
                     node.x,
                     node.y,
                     node.lane,

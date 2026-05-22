@@ -6,6 +6,7 @@ export type GraphEdgeType = "parent" | "merge";
 export type GraphCommitNode = {
   id: string;
   shortId: string;
+  message: string;
   summary: string;
   authorName?: string;
   authorTime: number;

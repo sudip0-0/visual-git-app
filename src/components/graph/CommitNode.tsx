@@ -2,12 +2,16 @@ import type { GraphCommitNode as GraphCommitNodeType } from "../../types/graph";
 
 type CommitNodeProps = {
   commit: GraphCommitNodeType;
+  isDimmed: boolean;
+  isSearchMatch: boolean;
   isSelected: boolean;
   onSelectCommit: (commitId: string) => void;
 };
 
 export function CommitNode({
   commit,
+  isDimmed,
+  isSearchMatch,
   isSelected,
   onSelectCommit,
 }: CommitNodeProps) {
@@ -18,7 +22,7 @@ export function CommitNode({
 
   return (
     <g
-      className="cursor-pointer outline-none"
+      className={isDimmed ? "cursor-pointer opacity-25 outline-none" : "cursor-pointer outline-none"}
       onClick={() => onSelectCommit(commit.id)}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
@@ -35,6 +39,8 @@ export function CommitNode({
         className={
           isSelected
             ? "fill-cyan-300 stroke-cyan-100"
+            : isSearchMatch
+              ? "fill-fuchsia-300 stroke-fuchsia-100"
             : commit.isHead
               ? "fill-emerald-300 stroke-emerald-100"
               : commit.isMerge
@@ -44,6 +50,13 @@ export function CommitNode({
         r={isSelected ? 7 : 5.5}
         strokeWidth={2}
       />
+      {isSearchMatch && !isSelected ? (
+        <circle
+          className="fill-transparent stroke-fuchsia-300/60"
+          r={10}
+          strokeWidth={1.5}
+        />
+      ) : null}
       <text
         className={
           isSelected

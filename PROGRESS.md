@@ -2,17 +2,17 @@
 
 ## Current Project Status
 
-Git data engine, graph engine, and basic graph UI with pan and zoom implemented.
+Git data engine, graph engine, graph UI, and client-side search/filter interactions implemented.
 
-The app can open a native folder picker, validate a selected local Git repository in Rust, load read-only repository metadata through a `GitProvider` abstraction, list local and remote branches, list tags, load recent commits with parent hashes and merge detection, build graph-ready commit data with lanes, edges, refs, and HEAD markers, and render a scrollable SVG commit graph with selectable commits plus pan and zoom controls. Rust and frontend checks pass.
+The app can open a native folder picker, validate a selected local Git repository in Rust, load read-only repository metadata through a `GitProvider` abstraction, list local and remote branches, list tags, load recent commits with parent hashes and merge detection, build graph-ready commit data with lanes, edges, refs, and HEAD markers, render a scrollable SVG commit graph with selectable commits plus pan and zoom controls, search commits, highlight branch reachability, and select tagged commits. Rust and frontend checks pass.
 
 ## Current Phase
 
-Phase 5: Graph UI
+Phase 6: Search and Filters
 
 ## Current Focus
 
-Ready for TASK-0601: Search commits.
+Ready for TASK-0701: Commit changed files.
 
 ## Completed
 
@@ -36,7 +36,65 @@ None.
 
 ## Next Recommended Task
 
-None.
+TASK-0701: Commit changed files.
+
+## 2026-05-22
+
+### TASK-0601 to TASK-0603: Search and filters
+
+Status: Done
+
+Summary:
+
+- Added client-side commit search by full hash, short hash, full message, summary, and author name.
+- Added clickable search results that select commits and highlight matching graph nodes.
+- Added branch list and visual branch reachability highlighting without changing Git state.
+- Added tag list in the sidebar; clicking a tag selects its target commit.
+- Added full commit message to the graph response for accurate message search.
+- Added unit tests for the search helper.
+
+Files changed:
+
+- `src-tauri/src/graph/graph_builder.rs`
+- `src-tauri/src/models/graph.rs`
+- `src/components/branches/BranchList.tsx`
+- `src/components/branches/TagList.tsx`
+- `src/components/graph/CommitGraph.tsx`
+- `src/components/graph/CommitNode.tsx`
+- `src/components/graph/GraphViewport.tsx`
+- `src/components/layout/AppShell.tsx`
+- `src/components/layout/GraphArea.tsx`
+- `src/components/layout/Sidebar.tsx`
+- `src/components/search/CommitSearch.tsx`
+- `src/components/search/SearchResults.tsx`
+- `src/stores/graphStore.ts`
+- `src/types/graph.ts`
+- `src/utils/graphSearch.test.ts`
+- `src/utils/graphSearch.ts`
+- `TASKS.md`
+- `PROGRESS.md`
+
+Tests run:
+
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test`
+- `cargo fmt --check`
+- `cargo check`
+- `cargo test`
+- Source/config safety scan for Git write operations, shell execution, repository script execution, and network calls
+
+Result:
+
+- Passed.
+
+Issues found:
+
+- Graph nodes only exposed commit summaries, so full commit message search would have been incomplete; added full message to the graph response.
+
+Next recommended task:
+
+- TASK-0701: Commit changed files.
 
 ## 2026-05-21
 
